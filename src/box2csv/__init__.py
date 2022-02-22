@@ -26,7 +26,7 @@ def decode_parse_lines(lines, merge=" ", tag_dic={}):
             else:
                 out[tag] = line
     return out
-        
+
 def ipaify_lex(tokenizer, str):
     out = []
     strings = str.split("; ")
@@ -100,7 +100,6 @@ def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}):
         out = {}
         for line in entry.split("\n"):
             col = line.split(" ")[0]
-            print(col, col_dic)
             if col in col_dic:
                 current_col = col_dic[col]
                 out[current_col] = line.replace(col, "").strip(" ")
