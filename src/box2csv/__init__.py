@@ -90,10 +90,10 @@ def extract_allomorphs(filename):
 
 
 # main function
-def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}):
+def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}, encoding="cp1252"):
     log.info(f"Parsing lexical database {filename} ({lg}), using parsing database {parsing_db}")
     ids = []
-    full_text = open(filename, "r", encoding="cp1252").read()
+    full_text = open(filename, "r", encoding=encoding).read()
     entries = full_text.split("\n\n")
     conv_entries = []
     for entry in entries[1::]:
