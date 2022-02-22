@@ -98,13 +98,19 @@ def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}, e
     conv_entries = []
     for entry in entries[1::]:
         out = {}
+        current_col = None
         for line in entry.split("\n"):
             col = line.split(" ")[0]
+            tent = line.replace(col, "").strip(" ")
             if col in col_dic:
                 current_col = col_dic[col]
                 out[current_col] = line.replace(col, "").strip(" ")
             else:
-                out[current_col] += " " + line
+                if not current_col:
+                    log.error(f"Unknown line key: {col} (value {tent})")
+                    return None, None
+                else:
+                    out[current_col] += " " + line
         if "Form" in out:
             id = slugify(out["Form"])
             final_id = id
@@ -119,11 +125,14 @@ def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}, e
             out["ID"] = final_id
             conv_entries.append(out)
     df = pd.DataFrame.from_dict(conv_entries)
+    print(df)
     df["Language_ID"] = lg
     df["Parameter_ID"].replace("", "?", inplace=True)
 
     # get allomorphs, if parsing database present
-    if parsing_db:
+    if not parsing_db:
+        forms = None
+    else:
         allomorphs = extract_allomorphs(parsing_db)
         allomorphs = pd.DataFrame.from_dict(allomorphs)
         # print(allomorphs[allomorphs["Allomorph"] == "-thïrï"])
@@ -159,7 +168,9 @@ def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}, e
         forms = pd.DataFrame.from_dict(forms)
 
         df.drop(columns=["Allomorphs"], inplace=True)
+
     if tokenizer:
         df["Form"] = df["Form"].apply(lambda x: ipaify_lex(tokenizer, x))
-        forms["Form"] = forms["Form"].apply(lambda x: ipaify_lex(tokenizer, x))
+        if parsing_db:
+            forms["Form"] = forms["Form"].apply(lambda x: ipaify_lex(tokenizer, x))
     return df, forms
