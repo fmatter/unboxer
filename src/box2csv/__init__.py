@@ -52,22 +52,22 @@ def segmentify(tokenizer, str):
     else:
         return res
 
-def split_parse_file(input):
+def split_parse_file(input, tag_dic):
     entries = input.split("\n\n")
-    entries = [decode_parse_lines(entry.split("\n"), tag_dic={"\\wd": "Form", "\\mb": "Morphemes"}) for entry in entries]
+    entries = [decode_parse_lines(entry.split("\n"), tag_dic=tag_dic) for entry in entries]
     # for entry in entries[1::]:
     #     if entry["Form"] == "eh":
     #         print(entry)
     return entries[1::]
 
 # gather allomorphs of a given morpheme by using the parsing database
-def extract_allomorphs(filename):
+def extract_allomorphs(filename, col_dic, encoding="cp1252"):
 
     def prune_words(l):
         return [x for x in l if " " not in x]
 
-    parse_entries = open(filename, "r", encoding="cp1252").read()
-    parse_entries = split_parse_file(parse_entries)
+    parse_entries = open(filename, "r", encoding=encoding).read()
+    parse_entries = split_parse_file(parse_entries, col_dic)
     # for e in parse_entries:
     #     if list(e.keys()) != ["Form", "Morphemes"]:
     #         print(e)
@@ -125,7 +125,6 @@ def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}, e
             out["ID"] = final_id
             conv_entries.append(out)
     df = pd.DataFrame.from_dict(conv_entries)
-    print(df)
     df["Language_ID"] = lg
     df["Parameter_ID"].replace("", "?", inplace=True)
 
@@ -133,7 +132,7 @@ def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}, e
     if not parsing_db:
         forms = None
     else:
-        allomorphs = extract_allomorphs(parsing_db)
+        allomorphs = extract_allomorphs(parsing_db, col_dic, encoding=encoding)
         allomorphs = pd.DataFrame.from_dict(allomorphs)
         # print(allomorphs[allomorphs["Allomorph"] == "-thïrï"])
         allomorphs = (
