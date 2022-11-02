@@ -1,0 +1,16 @@
+# YAML 1.2
+---
+cff-version: "1.1.0"
+title: "box2csv"
+authors:
+  - family-names: Matter
+    given-names: Florian
+    orcid: "https://orcid.org/0000-0002-2545-5154"
+date-released: 2022-11-01
+version: "0.0.1.dev"
+repository-code: "https://github.com/fmatter/box2csv"
+keywords:
+  - shoebox
+  - toolbox
+message: "If you use this software, please cite it using these metadata."
+license: Apache-2.0
