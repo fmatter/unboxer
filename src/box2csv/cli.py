@@ -15,23 +15,10 @@ log = logging.getLogger(__name__)
 def main():
     pass  # pragma: no cover
 
+
 @click.argument(
     "filename",
     type=click.Path(exists=True, path_type=Path),
-)
-@click.option(
-    "-f",
-    "--format",
-    "data_format",
-    type=click.Choice(["toolbox", "shoebox"], case_sensitive=False),
-    default="toolbox",
-)
-@click.option(
-    "-c",
-    "--conf",
-    "config_file",
-    type=click.Path(exists=True, path_type=Path),
-    default=None,
 )
 @click.option(
     "-o",
@@ -39,8 +26,29 @@ def main():
     "output_dir",
     type=click.Path(exists=True, path_type=Path),
     default=Path("."),
+    show_default=True,
+    help="Output directory",
 )
-@click.option("-d", "--cldf", "cldf", default=False, is_flag=True)
+@click.option(
+    "-f",
+    "--format",
+    "data_format",
+    type=click.Choice(["toolbox", "shoebox"], case_sensitive=False),
+    default="toolbox",
+    show_default=True,
+    help="The format of the database you are processing",
+)
+@click.option(
+    "-d", "--cldf", "cldf", default=False, is_flag=True, help="Create a CLDF dataset"
+)
+@click.option(
+    "-c",
+    "--conf",
+    "config_file",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="Path to a yaml configuration file",
+)
 @main.command()
 def corpus(filename, data_format, config_file, cldf, output_dir):
     print(filename, config_file, cldf, output_dir)
