@@ -1,6 +1,6 @@
 # box2csv
 
-Extract shoebox and toolbox data to CSV files.
+Extract data from shoebox and toolbox projects to CSV files.
 
 ![License](https://img.shields.io/github/license/fmatter/box2csv)
 [![Tests](https://img.shields.io/github/workflow/status/fmatter/box2csv/tests?label=tests)](https://github.com/fmatter/box2csv/actions/workflows/tests.yml)
@@ -22,7 +22,7 @@ box2csv corpus mytoolbox/mytextdatabase.txt
 
 Project-specific configuration can be passed via `--conf your/config.yaml`; to see what options are available, check [the default configuration file](src/box2csv/data/config.yaml) as well as the default configuration files for [toolbox](src/box2csv/data/toolbox.yaml) and [shoebox](src/box2csv/data/shoebox.yaml).
 
-To create a [CLDF](cldf.clld.org/) dataset, add the option `--cldf`.
+To create a [CLDF](cldf.clld.org/) version of the corpus, add the option `--cldf`.
 For more help on how to run the command, use `box2csv corpus --help`.
 
 ## Problems
