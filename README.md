@@ -9,10 +9,10 @@ Extract shoebox and toolbox data to CSV files.
 
 ## Usage
 At the moment, there is only one command: `box2csv corpus`, for collections of glossed texts.
-To create a file `texts.csv` from a toolbox file `texts.txt`:
+To create a file `mytextdatabase.csv` from a toolbox file `mytextdatabase.txt`:
 
 ```shell
-box2csv corpus mytoolbox/texts.txt
+box2csv corpus mytoolbox/mytextdatabase.txt
 ```
 
 Project-specific configuration can be passed via `--conf your/config.yaml`; to see what options are available, check [the default configuration file](src/box2csv/data/config.yaml) as well as the default configuration files for [toolbox](src/box2csv/data/toolbox.yaml) and [shoebox](src/box2csv/data/shoebox.yaml).
