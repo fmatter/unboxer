@@ -15,7 +15,7 @@ To create a file `texts.csv` from a toolbox file `texts.txt`:
 box2csv corpus mytoolbox/texts.txt
 ```
 
-Project-specific configuration can be passed via `--conf your/config.yaml`; available options can be seen in the default configurations for [toolbox](src/box2csv/data/toolbox.yaml) and [shoebox](src/box2csv/data/shoebox.yaml).
+Project-specific configuration can be passed via `--conf your/config.yaml`; available options can be seen in [the default configuration file](src/box2csv/data/config.yaml) as well as those specific for [toolbox](src/box2csv/data/toolbox.yaml) and [shoebox](src/box2csv/data/shoebox.yaml).
 For more information please use `box2csv corpus --help`.
 
 ## Problems
