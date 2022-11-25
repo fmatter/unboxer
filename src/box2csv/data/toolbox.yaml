@@ -1,0 +1,14 @@
+record_marker: ref
+mappings:
+  tx: Primary_Text
+  mb: Analyzed_Word
+  ge: Gloss
+  ps: Gramm
+  ft: Translated_Text
+tabbed_fields:
+  - Analyzed_Word
+  - Gloss
+  - Gramm
+encoding: utf-8
+slugify: true
+fix_clitics: true

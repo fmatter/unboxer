@@ -1,175 +1,112 @@
+"""Top-level package for box2csv."""
+import logging
+import re
+import colorlog
 import pandas as pd
-from clld.cliutil import slug
-from clldutils.loglib import Logging, get_colorlog
-import sys
-from pathlib import Path
-log = get_colorlog(__name__, sys.stdout)
-
-# for creating IDs from strings
-def slugify(s):
-    out = slug(s)
-    if out == "":
-        out = "X"
-    return out
+from slugify import slugify
+from box2csv.cldf import create_cldf
 
 
-def decode_parse_lines(lines, merge=" ", tag_dic={}):
+handler = colorlog.StreamHandler(None)
+handler.setFormatter(
+    colorlog.ColoredFormatter("%(log_color)s%(levelname)-7s%(reset)s %(message)s")
+)
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+log.propagate = True
+log.addHandler(handler)
+
+
+__author__ = "Florian Matter"
+__email__ = "fmatter@mailbox.org"
+__version__ = "0.0.1.dev"
+
+used_slugs = [""]
+
+
+def _slugify(text):
+    first = slugify(text)
+    if first not in used_slugs:
+        return first
+    i = 0
+    slug_cand = f"{first}-{i}"
+    while slug_cand in used_slugs:
+        i += 1
+        slug_cand = f"{first}-{i}"
+    return slug_cand
+
+
+def _remove_spaces(text):
+    for sep in ["- ", " -"]:
+        while sep in text:
+            text = text.replace(sep, sep.strip())
+    return re.sub(r"\s+", "\t", text)
+
+
+def _get_fields(record):
     out = {}
-    for line in lines:
-        if line.startswith("\\"):
-            tag = line.split(" ")[0]
-            line = line.strip(tag).strip()
-            if tag in tag_dic:
-                tag = tag_dic[tag]
-            if tag in out:
-                out[tag] += merge + line
+    marker = None
+    for line in record.split("\n"):
+        if not line.startswith("\\"):
+            out[marker] += " " + line
+        elif " " in line:
+            marker, content = line.split(" ", 1)
+            if marker in out:
+                out[marker] += " " + content
             else:
-                out[tag] = line
+                out[marker] = content
+        else:
+            out[line] = ""
     return out
 
-def ipaify_lex(tokenizer, str):
+
+def _fix_clitics(string):
+    string = string.replace("=\t", "=").replace("\t=", "=")
+    return string
+
+
+def _fix_glosses(rec, goal="Analyzed_Word", target="Gloss", sep="\t"):
+    if rec[goal].count(sep) != rec[target].count(sep):
+        rec[target] = rec[target].strip(sep)
+        if rec[goal].count(sep) != rec[target].count(sep):
+            rec[goal] = rec[goal].strip(sep)
+    return rec
+
+
+def extract_corpus(database_file, conf, output_dir, cldf=False):
+    """Extract text records from a corpus.
+
+    Args:
+        database_file (str): The path to the corpus database file.
+        conf (dict): Configuration (see) todo: insert link
+        cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
+    """
+    with open(database_file, "r", encoding=conf["encoding"]) as f:
+        content = f.read()
+    records = content.split("\\" + conf["record_marker"])
     out = []
-    strings = str.split("; ")
-    rem = ["[", "]", "="]
-    rem = []
-    for string in strings:
-        for i in rem:
-            string = string.replace(i, "")
-        if ("�" in tokenizer(string, "IPA", segment_separator="", separator=" ") and len(string) > 1):
-            string = string.lower()
-        conv = tokenizer(string, "IPA", segment_separator="", separator=" ")
-        if "�" in conv:
-            log.warning(f"Can't convert {string}: {conv}")
-            return str
-        out.append(conv)
-    return "; ".join(out)
-
-def segmentify(tokenizer, str):
-    str = str.replace("-", "").replace("=", "").replace("0", "")
-    res = tokenizer(str, column="IPA")
-    if "�" in res:
-        return ""
+    for record in records[1::]:
+        out.append(_get_fields("\\" + conf["record_marker"] + record))
+    df = pd.DataFrame.from_dict(out)
+    df.rename(columns=conf["mappings"], inplace=True)
+    if "ID" in df:
+        if conf["slugify"]:
+            df["ID"] = df["ID"].map(_slugify)
     else:
-        return res
-
-def split_parse_file(input, tag_dic):
-    entries = input.split("\n\n")
-    entries = [decode_parse_lines(entry.split("\n"), tag_dic=tag_dic) for entry in entries]
-    # for entry in entries[1::]:
-    #     if entry["Form"] == "eh":
-    #         print(entry)
-    return entries[1::]
-
-# gather allomorphs of a given morpheme by using the parsing database
-def extract_allomorphs(filename, col_dic, encoding="cp1252"):
-
-    def prune_words(l):
-        return [x for x in l if " " not in x]
-
-    parse_entries = open(filename, "r", encoding=encoding).read()
-    parse_entries = split_parse_file(parse_entries, col_dic)
-    # for e in parse_entries:
-    #     if list(e.keys()) != ["Form", "Morphemes"]:
-    #         print(e)
-    df = pd.DataFrame.from_dict(parse_entries)
-    # print(df[df["Form"] == "eh"])
-    df = df[(df["Morphemes"].str.contains("; ") | ~(df["Form"].str.contains(" ")))]
-    # print(df[df["Form"] == "eh"])
-    df["Morphemes"] = df["Morphemes"].apply(lambda x: x.split("; "))
-    # print(df[df["Form"] == "eh"])
-    df["Morphemes"] = df["Morphemes"].apply(lambda x: prune_words(x))
-    # print(df[df["Form"] == "eh"])
-    # df = df[df["check"]]
-    # df.drop(columns="check", inplace=True)
-    # print(df[df["Form"] == "eh"])
-    morphemes = []
-    for i, row in df.iterrows():
-        for morpheme in row["Morphemes"]:
-            morphemes.append({"Morpheme": morpheme, "Allomorph": row["Form"]})
-    return morphemes
-
-
-# main function
-def convert_shoebox(filename, lg, parsing_db=None, tokenizer=None, col_dic={}, encoding="cp1252"):
-    log.info(f"Parsing lexical database {filename} ({lg}), using parsing database {parsing_db}")
-    ids = []
-    full_text = open(filename, "r", encoding=encoding).read()
-    entries = full_text.split("\n\n")
-    conv_entries = []
-    for entry in entries[1::]:
-        out = {}
-        current_col = None
-        for line in entry.split("\n"):
-            col = line.split(" ")[0]
-            tent = line.replace(col, "").strip(" ")
-            if col in col_dic:
-                current_col = col_dic[col]
-                out[current_col] = line.replace(col, "").strip(" ")
-            else:
-                if not current_col:
-                    log.error(f"Unknown line key: {col} (value {tent})")
-                    return None, None
-                else:
-                    out[current_col] += " " + line
-        if "Form" in out:
-            id = slugify(out["Form"])
-            final_id = id
-            if id in ids:
-                c = 0
-                while final_id in ids:
-                    c += 1
-                    final_id = f"{id}-{c}"
-            else:
-                final_id = id
-            ids.append(final_id)
-            out["ID"] = final_id
-            conv_entries.append(out)
-    df = pd.DataFrame.from_dict(conv_entries)
-    df["Language_ID"] = lg
-    df["Parameter_ID"].replace("", "?", inplace=True)
-
-    # get allomorphs, if parsing database present
-    if not parsing_db:
-        forms = None
-    else:
-        allomorphs = extract_allomorphs(parsing_db, col_dic, encoding=encoding)
-        allomorphs = pd.DataFrame.from_dict(allomorphs)
-        # print(allomorphs[allomorphs["Allomorph"] == "-thïrï"])
-        allomorphs = (
-            allomorphs.groupby("Morpheme").agg({"Allomorph": "; ".join}).reset_index()
-        )
-        allomorphs.rename(columns={"Allomorph": "Allomorphs"}, inplace=True)
-        allomorphs = allomorphs[allomorphs["Morpheme"] != ""]
-        allomorphs = allomorphs[allomorphs["Morpheme"] != "***"]
-        # print(df[df["Parameter_ID"].str.contains("Cop")])
-        df = pd.merge(df, allomorphs, left_on="Form", right_on="Morpheme", how="left")
-        # print(df[df["Parameter_ID"].str.contains("Cop")])
-        df["Morpheme"] = df["Morpheme"].fillna("")
-        df.drop(columns="Morpheme", inplace=True)
-        # print(df[["Allomorphs", "Form"]])
-        df["Allomorphs"] = df["Allomorphs"].apply(lambda x: x.split("; ") if not pd.isnull(x) else [])
-        df["Allomorphs"] = df.apply(lambda x: x["Allomorphs"] if x["Form"] in x["Allomorphs"] else x["Allomorphs"] + [x["Form"]], axis=1)
-
-        forms = []
-        for i, row in df.iterrows():
-            for a_count, a in enumerate(row["Allomorphs"]):
-                forms.append(
-                    {
-                        "ID": f"{row['ID']}-{a_count}",
-                        "Form": a,
-                        "Morpheme_ID": row["ID"],
-                        "Language_ID": row["Language_ID"],
-                        "Parameter_ID": row["Parameter_ID"],
-                    }
-                )
-                if tokenizer:
-                    forms[-1]["Segments"] = segmentify(tokenizer, a)
-        forms = pd.DataFrame.from_dict(forms)
-
-        df.drop(columns=["Allomorphs"], inplace=True)
-
-    if tokenizer:
-        df["Form"] = df["Form"].apply(lambda x: ipaify_lex(tokenizer, x))
-        if parsing_db:
-            forms["Form"] = forms["Form"].apply(lambda x: ipaify_lex(tokenizer, x))
-    return df, forms
+        df["ID"] = df.index
+    df.fillna("", inplace=True)
+    for col in df.columns:
+        if col in conf["tabbed_fields"]:
+            df[col] = df[col].apply(_remove_spaces)
+    df = df.apply(_fix_glosses, axis=1)
+    # df = df.apply(_fix_glosses, axis=1) # this may be needed somehow?
+    if conf["fix_clitics"]:
+        for col in conf["tabbed_fields"]:
+            df[col] = df[col].apply(_fix_clitics)
+    if "Primary_Text" in df.columns:
+        df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))
+    if output_dir:
+        df.to_csv((output_dir / database_file.name).with_suffix(".csv"), index=False)
+    if cldf:
+        create_cldf(tables={"ExampleTable": df}, conf=conf, output_dir=output_dir)
+    return df
