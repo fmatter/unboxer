@@ -15,7 +15,7 @@ def load_yaml(path):
 
 
 def load_default_config(filename):
-    config = load_yaml(DATA / f"config.yaml")
+    config = load_yaml(DATA / "config.yaml")
     config.update(load_yaml(DATA / f"{filename}.yaml"))
     return config
 
