@@ -20,7 +20,7 @@ To create a file `mytextdatabase.csv` from a toolbox file `mytextdatabase.txt`:
 box2csv corpus mytoolbox/mytextdatabase.txt
 ```
 
-Project-specific configuration can be passed via `--conf your/config.yaml`; to see what options are available, check [the default configuration file](src/box2csv/data/config.yaml) as well as the default configuration files for [toolbox](src/box2csv/data/toolbox.yaml) and [shoebox](src/box2csv/data/shoebox.yaml).
+Project-specific configuration can be passed via `--conf your/config.yaml`; to see what options are available, check [the default configuration file](src/box2csv/data/interlinear_config.yaml) as well as the default configuration files for [toolbox](src/box2csv/data/toolbox.yaml) and [shoebox](src/box2csv/data/shoebox.yaml).
 
 To create a [CLDF](cldf.clld.org/) version of the corpus, add the option `--cldf`.
 For more help on how to run the command, use `box2csv corpus --help`.

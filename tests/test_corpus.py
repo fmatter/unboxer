@@ -4,6 +4,7 @@ from click.testing import CliRunner
 from box2csv.cli import corpus
 from pycldf import Dataset
 
+
 def test_toolbox(data, tmp_path):
     runner = CliRunner()
     runner.invoke(
@@ -18,7 +19,6 @@ def test_toolbox(data, tmp_path):
         ],
         catch_exceptions=False,
     )
-    # extract_corpus(data / "yekwana.txt", conf, tmp_path, cldf=True)
     assert (tmp_path / "yekwana.csv").is_file()
     assert (tmp_path / "cldf" / "examples.csv").is_file()
     ds = Dataset.from_metadata(tmp_path / "cldf" / "metadata.json")
