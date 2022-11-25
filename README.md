@@ -3,6 +3,11 @@
 Extract shoebox and toolbox data to CSV files.
 
 ![License](https://img.shields.io/github/license/fmatter/box2csv)
+[![Tests](https://img.shields.io/github/workflow/status/fmatter/box2csv/tests?label=tests)](https://github.com/fmatter/box2csv/actions/workflows/tests.yml)
+[![Linting](https://img.shields.io/github/workflow/status/fmatter/box2csv/lint?label=linting)](https://github.com/fmatter/box2csv/actions/workflows/lint.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/fmatter/box2csv)](https://app.codecov.io/gh/fmatter/box2csv/)
+[![PyPI](https://img.shields.io/pypi/v/box2csv.svg)](https://pypi.org/project/box2csv)
+![Versions](https://img.shields.io/pypi/pyversions/box2csv)
 
 ## Installation
 `pip install box2csv`

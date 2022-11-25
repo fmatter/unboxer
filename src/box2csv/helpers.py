@@ -1,7 +1,9 @@
 import yaml
 from importlib_resources import files
 
+
 DATA = files("box2csv") / "data"
+
 
 def load_yaml(path):
     with open(path, "r", encoding="utf-8") as f:
