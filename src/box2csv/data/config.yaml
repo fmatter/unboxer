@@ -10,4 +10,4 @@ aligned_fields: # Fields containing aligned text. Words will be aligned with tab
   - Gloss
   - Part_Of_Speech
 slugify: true # Turn IDs (\ref) like "ConvInGarden.003" into "convingarden-003".
-fix_clitics: true # Remove spaces after proclitics and after enclitics.
+fix_clitics: true # Remove spaces after proclitics and before enclitics.
