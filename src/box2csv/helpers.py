@@ -1,6 +1,7 @@
 import yaml
 from importlib_resources import files
 
+DATA = files("box2csv") / "data"
 
 def load_yaml(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -14,8 +15,8 @@ def load_yaml(path):
 
 
 def load_default_config(filename):
-    default_config_path = files("box2csv") / "data" / f"{filename}.yaml"
-    config = load_yaml(default_config_path)
+    config = load_yaml(DATA / f"config.yaml")
+    config.update(load_yaml(DATA / f"{filename}.yaml"))
     return config
 
 

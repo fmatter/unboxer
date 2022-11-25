@@ -96,12 +96,12 @@ def extract_corpus(database_file, conf, output_dir, cldf=False):
         df["ID"] = df.index
     df.fillna("", inplace=True)
     for col in df.columns:
-        if col in conf["tabbed_fields"]:
+        if col in conf["aligned_fields"]:
             df[col] = df[col].apply(_remove_spaces)
     df = df.apply(_fix_glosses, axis=1)
     # df = df.apply(_fix_glosses, axis=1) # this may be needed somehow?
     if conf["fix_clitics"]:
-        for col in conf["tabbed_fields"]:
+        for col in conf["aligned_fields"]:
             df[col] = df[col].apply(_fix_clitics)
     if "Primary_Text" in df.columns:
         df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))

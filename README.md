@@ -16,10 +16,7 @@ box2csv corpus mytoolbox/texts.txt
 ```
 
 Project-specific configuration can be passed via `--conf your/config.yaml`; available options can be seen in the default configurations for [toolbox](src/box2csv/data/toolbox.yaml) and [shoebox](src/box2csv/data/shoebox.yaml).
-To process a shoebox database, pass `--format shoebox`.
-To create a CLDF dataset, pass `--cldf`.
-To change the output directory, pass `--output your/target/directory`.
-You can also use `box2csv corpus --help`.
+For more information please use `box2csv corpus --help`.
 
 ## Problems
 1. if running `box2csv` produces warnings, check your database for possible inconsistencies

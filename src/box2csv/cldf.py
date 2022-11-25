@@ -30,7 +30,7 @@ def create_dataset(tables, conf, output_dir):
                     },
                 )
             if table == "ExampleTable":
-                for col in conf["tabbed_fields"]:
+                for col in conf["aligned_fields"]:
                     df[col] = df[col].apply(lambda x: x.split("\t"))
             for rec in df.to_dict("records"):
                 writer.objects[table].append(rec)
