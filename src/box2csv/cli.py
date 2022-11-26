@@ -51,7 +51,6 @@ def main():
 )
 @main.command()
 def corpus(filename, data_format, config_file, cldf, output_dir):
-    print(filename, config_file, cldf, output_dir)
     if config_file:
         conf = load_config(config_file, data_format)
     else:

@@ -8,11 +8,6 @@ DATA = files("box2csv") / "data"
 def load_yaml(path):
     with open(path, "r", encoding="utf-8") as f:
         dic = yaml.load(f, Loader=yaml.SafeLoader)
-        if "mappings" in dic:
-            if "record_marker" in dic:
-                dic["mappings"][dic["record_marker"]] = "ID"
-            for marker in list(dic["mappings"].keys()):
-                dic["mappings"]["\\" + marker] = dic["mappings"].pop(marker)
         return dic
 
 
@@ -25,6 +20,12 @@ def load_default_config(filename):
 def load_config(path, default="toolbox"):
     config = load_default_config(default)
     config.update(load_custom_config(path))
+    if "record_marker" in config:
+        config.setdefault("mappings", {})
+        config["mappings"][config["record_marker"]] = "ID"
+    if "mappings" in config:
+        for marker in list(config["mappings"].keys()):
+            config["mappings"]["\\" + marker] = config["mappings"].pop(marker)
     return config
 
 

@@ -1,1 +1,7 @@
 encoding: cp1252 # The file encoding.
+mappings: # The fields specified here will be renamed accordingly. Note the absence of \ !
+  t: Primary_Text
+  m: Analyzed_Word
+  g: Gloss
+  p: Part_Of_Speech
+  f: Translated_Text
