@@ -1,11 +1,12 @@
 """Top-level package for box2csv."""
 import logging
 import re
+from pathlib import Path
 import colorlog
 import pandas as pd
 from slugify import slugify
 from box2csv.cldf import create_cldf
-from pathlib import Path
+
 
 handler = colorlog.StreamHandler(None)
 handler.setFormatter(

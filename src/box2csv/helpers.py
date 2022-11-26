@@ -1,6 +1,7 @@
+from pathlib import Path
 import yaml
 from importlib_resources import files
-from pathlib import Path
+
 
 DATA = files("box2csv") / "data"
 
