@@ -6,12 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.1] - 2022-11-25
+### Fixed
+* casting strings to path when using from a python script
 
 ## [0.0.1] - 2022-11-25
 
 Initial release
 
 [Unreleased]: https://github.com/fmatter/box2csv/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/fmatter/box2csv/compare/v0.0.1...v0.0.1
 [0.0.1]: https://github.com/fmatter/box2csv/compare/v0.0.1...v0.0.1

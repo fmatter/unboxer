@@ -1,6 +1,6 @@
 import yaml
 from importlib_resources import files
-
+from pathlib import Path
 
 DATA = files("box2csv") / "data"
 
@@ -30,6 +30,7 @@ def load_config(path, default="toolbox"):
 
 
 def load_custom_config(config_path):
+    config_path = Path(config_path)
     if (config_path).is_file():
         return load_yaml(config_path)
     return {}

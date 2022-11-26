@@ -5,7 +5,7 @@ import colorlog
 import pandas as pd
 from slugify import slugify
 from box2csv.cldf import create_cldf
-
+from pathlib import Path
 
 handler = colorlog.StreamHandler(None)
 handler.setFormatter(
@@ -73,7 +73,7 @@ def _fix_glosses(rec, goal="Analyzed_Word", target="Gloss", sep="\t"):
     return rec
 
 
-def extract_corpus(database_file, conf, output_dir, cldf=False):
+def extract_corpus(database_file, conf, output_dir=".", cldf=False):
     """Extract text records from a corpus.
 
     Args:
@@ -81,6 +81,8 @@ def extract_corpus(database_file, conf, output_dir, cldf=False):
         conf (dict): Configuration (see) todo: insert link
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
+    output_dir = Path(output_dir)
+    database_file = Path(database_file)
     with open(database_file, "r", encoding=conf["encoding"]) as f:
         content = f.read()
     records = content.split("\\" + conf["record_marker"])
