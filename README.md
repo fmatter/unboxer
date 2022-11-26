@@ -10,7 +10,9 @@ Extract data from shoebox and toolbox projects to CSV files.
 ![Versions](https://img.shields.io/pypi/pyversions/box2csv)
 
 ## Installation
-```shell pip install box2csv```
+```shell
+pip install box2csv
+```
 
 ## Usage
 At the moment, there is only one command: `box2csv corpus`, for collections of glossed texts.
