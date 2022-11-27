@@ -44,7 +44,7 @@ def _remove_spaces(text):
     return re.sub(r"\s+", "\t", text)
 
 
-def _get_fields(record):
+def _get_fields(record, rec_marker):
     out = {}
     marker = None
     for line in record.split("\n"):
@@ -58,6 +58,8 @@ def _get_fields(record):
                 out[marker] = content
         else:
             out[line] = ""
+    if "".join([v for k, v in out.items() if k != "\\" + rec_marker]) == "":
+        return None
     return out
 
 
@@ -88,7 +90,12 @@ def extract_corpus(database_file, conf, output_dir=".", cldf=False):
     records = content.split("\\" + conf["record_marker"])
     out = []
     for record in records[1::]:
-        out.append(_get_fields("\\" + conf["record_marker"] + record))
+        res = _get_fields("\\" + conf["record_marker"] + record, conf["record_marker"])
+        if res:
+            out.append(res)
+        else:
+            log.warning("Empty record:")
+            log.warning(record)
     df = pd.DataFrame.from_dict(out)
     df.rename(columns=conf["mappings"], inplace=True)
     if "ID" in df:
@@ -108,7 +115,9 @@ def extract_corpus(database_file, conf, output_dir=".", cldf=False):
     if "Primary_Text" in df.columns:
         df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))
     if output_dir:
-        df.to_csv((Path(output_dir) / database_file.name).with_suffix(".csv"), index=False)
+        df.to_csv(
+            (Path(output_dir) / database_file.name).with_suffix(".csv"), index=False
+        )
     if cldf:
         create_cldf(tables={"ExampleTable": df}, conf=conf, output_dir=output_dir)
     return df
