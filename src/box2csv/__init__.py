@@ -82,7 +82,6 @@ def extract_corpus(database_file, conf, output_dir=".", cldf=False):
         conf (dict): Configuration (see) todo: insert link
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
-    output_dir = Path(output_dir)
     database_file = Path(database_file)
     with open(database_file, "r", encoding=conf["encoding"]) as f:
         content = f.read()
@@ -109,7 +108,7 @@ def extract_corpus(database_file, conf, output_dir=".", cldf=False):
     if "Primary_Text" in df.columns:
         df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))
     if output_dir:
-        df.to_csv((output_dir / database_file.name).with_suffix(".csv"), index=False)
+        df.to_csv((Path(output_dir) / database_file.name).with_suffix(".csv"), index=False)
     if cldf:
         create_cldf(tables={"ExampleTable": df}, conf=conf, output_dir=output_dir)
     return df
