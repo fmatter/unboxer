@@ -58,7 +58,7 @@ def _get_fields(record, rec_marker):
                 out[marker] = content
         else:
             out[line] = ""
-    if "".join([v for k, v in out.items() if k != "\\" + rec_marker]) == "":
+    if "".join([v for k, v in out.items() if k != rec_marker]) == "":
         return None
     return out
 
@@ -85,18 +85,24 @@ def extract_corpus(database_file, conf, output_dir=".", cldf=False):
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
     database_file = Path(database_file)
+    record_marker = "\\"+conf["record_marker"]
     with open(database_file, "r", encoding=conf["encoding"]) as f:
         content = f.read()
-    records = content.split("\\" + conf["record_marker"])
+    records = content.split(record_marker)
     out = []
     for record in records[1::]:
-        res = _get_fields("\\" + conf["record_marker"] + record, conf["record_marker"])
+        res = _get_fields(record_marker + record, record_marker)
         if res:
             out.append(res)
         else:
             log.warning("Empty record:")
             log.warning(record)
     df = pd.DataFrame.from_dict(out)
+    if not df[record_marker].is_unique:
+        log.warning("Found duplicate IDs, will only keep first of each:")
+        dupes = df[df.duplicated(record_marker)]
+        print(dupes)
+        df.drop_duplicates(record_marker, inplace=True)
     df.rename(columns=conf["mappings"], inplace=True)
     if "ID" in df:
         if conf["slugify"]:

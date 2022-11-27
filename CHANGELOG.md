@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * casting strings to path when using from a python script
 * leaving out records without any data
+* warning about duplicate records and removing them
 
 ## [0.0.1] - 2022-11-25
 
