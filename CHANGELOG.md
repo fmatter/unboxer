@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+* renamed to `unboxer`
 * casting strings to path when using from a python script
 * leaving out records without any data
 * warning about duplicate records and removing them
@@ -15,5 +16,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial release
 
-[Unreleased]: https://github.com/fmatter/box2csv/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/fmatter/box2csv/compare/v0.0.1...v0.0.1
+[Unreleased]: https://github.com/fmatter/unboxer/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/fmatter/unboxer/compare/v0.0.1...v0.0.1

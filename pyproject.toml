@@ -10,7 +10,7 @@ legacy_tox_ini = """
 [tox]
 envlist = py37,py38,py39,py310,lint
 skip_missing_interpreters = true
-toxworkdir=/tmp/.box2csv_tox
+toxworkdir=/tmp/.unboxer_tox
 
 [testenv]
 usedevelop = True
