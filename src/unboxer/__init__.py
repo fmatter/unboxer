@@ -147,6 +147,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                             gloss_key="Meaning",
                             type_key="Part_Of_Speech",
                         )
+                        del sense
                         if m_id:
                             w_slices.append(
                                 {
@@ -244,7 +245,7 @@ You can also explicitly set the correct file encoding in your config."""
             tdf[c] = df[c].apply(lambda x: re.sub(r"-\s+", "-INTERN", x))
             tdf[c] = df[c].apply(lambda x: re.sub(r"\s+-", "INTERN-", x))
             tdf[c] = df[c].apply(lambda x: re.split(r"\s+", x))
-        for i, rec in tdf.iterrows():
+        for rec in tdf.to_dict("records"):
             for obj, gloss in zip(rec["Analyzed_Word"], rec["Gloss"]):
                 morph_id = humidify(obj + "-" + gloss, key="pairs")
                 if morph_id not in morphs:
@@ -357,8 +358,6 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
         lambda x: humidify(f"{x['Headword']}-{x['Meaning']}", "form", unique=True),
         axis=1,
     )
-
-    morphemes, morphs = extract_morphs(df, sep)
 
     if output_dir:
         df.to_csv(

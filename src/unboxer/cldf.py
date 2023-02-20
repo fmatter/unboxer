@@ -24,8 +24,7 @@ def create_dataset(tables, conf, output_dir):
     def get_table_url(tablename):
         if tablename.lower() != tablename:
             return table_map[tablename]
-        else:
-            return table_map[tablename]["url"]
+        return table_map[tablename]["url"]
 
     spec = CLDFSpec(
         dir=output_dir / "cldf", module="Generic", metadata_fname="metadata.json"
@@ -149,5 +148,5 @@ def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; "):
 
 
 def create_wordlist_cldf(lexicon, conf, output_dir, sep="; "):
-    ds = _create_wordlist_cldf(lexicon, conf, output_dir, sep="; ")
+    ds = _create_wordlist_cldf(lexicon, conf, output_dir, sep)
     ds.validate(log=log)
