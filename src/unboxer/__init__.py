@@ -86,9 +86,9 @@ def extract_morphs(lexicon, sep):
         m_id = rec["ID"]
         try:
             dic = {
-            "Meaning": rec["Meaning"],
-            "Part_Of_Speech": rec["Part_Of_Speech"],
-            "Morpheme_ID": m_id,
+                "Meaning": rec["Meaning"],
+                "Part_Of_Speech": rec["Part_Of_Speech"],
+                "Morpheme_ID": m_id,
             }
         except KeyError as e:
             log.error(f"Please define {e} in lexicon_mappings in your conf.")
@@ -153,7 +153,9 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                         )
                         del sense
                         if morph_gloss == "":
-                            log.warning(f"Missing gloss for {morph_obj} in {sentence['ID']}")
+                            log.warning(
+                                f"Missing gloss for {morph_obj} in {sentence['ID']}"
+                            )
                             continue
                         if m_id:
                             w_slices.append(
@@ -294,7 +296,6 @@ You can also explicitly set the correct file encoding in your config."""
         morphs.drop_duplicates(subset="ID", inplace=True)
 
     if output_dir:
-
         df.to_csv(
             (Path(output_dir) / database_file.name).with_suffix(".csv"), index=False
         )
@@ -343,7 +344,7 @@ You can also explicitly set the correct file encoding in your config."""
 
 def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     database_file = Path(database_file)
-    conf["lexicon_mappings"]["\\"+conf["entry_marker"]] = "Headword"
+    conf["lexicon_mappings"]["\\" + conf["entry_marker"]] = "Headword"
     entry_marker = "\\" + conf["entry_marker"]
     with open(database_file, "r", encoding=conf["encoding"]) as f:
         content = f.read()
@@ -366,9 +367,9 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     df.fillna("", inplace=True)
     try:
         df["ID"] = df.apply(
-        lambda x: humidify(f"{x['Headword']}-{x['Meaning']}", "form", unique=True),
-        axis=1,
-    )
+            lambda x: humidify(f"{x['Headword']}-{x['Meaning']}", "form", unique=True),
+            axis=1,
+        )
     except KeyError as e:
         log.error(f"Please define marker for {e} in lexicon_mappings in your conf.")
         print(df)

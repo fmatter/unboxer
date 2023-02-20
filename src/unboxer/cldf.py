@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 
 def create_dataset(tables, conf, output_dir):
-
     table_map = {
         default: default for default in ["ExampleTable", "ParameterTable", "FormTable"]
     }
@@ -81,7 +80,9 @@ def _replace_meanings(label, meaning_dict):
 def get_lg(lg_id):
     try:
         import pyglottolog  # pylint: disable=import-outside-toplevel
-        from cldfbench.catalogs import Glottolog  # pylint: disable=import-outside-toplevel
+        from cldfbench.catalogs import (
+            Glottolog,
+        )  # pylint: disable=import-outside-toplevel
     except ImportError:
         log.error(
             "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can add a languages.csv file."
