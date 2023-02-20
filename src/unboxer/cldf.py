@@ -1,4 +1,5 @@
 import logging
+import sys
 import pandas as pd
 from cldf_ldd import add_keys
 from cldf_ldd import components
@@ -80,16 +81,13 @@ def _replace_meanings(label, meaning_dict):
 
 def get_lg(lg_id):
     try:
-        from cldfbench.catalogs import (
-            Glottolog,
-        )  # pylint: disable=import-outside-toplevel
-        from cldfbench.catalogs import (
-            pyglottolog,
-        )  # pylint: disable=import-outside-toplevel
+        import pyglottolog  # pylint: disable=import-outside-toplevel
+        from cldfbench.catalogs import Glottolog  # pylint: disable=import-outside-toplevel
     except ImportError:
         log.error(
-            "Install cldfbench and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can add a languages.csv file"
+            "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can add a languages.csv file."
         )
+        sys.exit()
     glottolog = pyglottolog.Glottolog(Glottolog.from_config().repo.working_dir)
     languoid = glottolog.languoid(lg_id)
     return {

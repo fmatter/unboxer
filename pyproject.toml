@@ -17,6 +17,7 @@ usedevelop = True
 commands = 
     pytest --cov
 extras = dev
+deps = pyglottolog
 
 [testenv:lint]
 commands =
