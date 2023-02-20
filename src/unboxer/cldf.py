@@ -14,7 +14,8 @@ log = logging.getLogger(__name__)
 
 def create_dataset(tables, conf, output_dir):
     table_map = {
-        default: default for default in ["ExampleTable", "ParameterTable", "FormTable", "MediaTable"]
+        default: default
+        for default in ["ExampleTable", "ParameterTable", "FormTable", "MediaTable"]
     }
 
     for component in components:
@@ -44,6 +45,20 @@ def create_dataset(tables, conf, output_dir):
                         "virtual": True,
                         "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#glottocode",
                         "valueUrl": conf["Language_ID"],
+                    },
+                )
+            if table in ["morphs", "morphemes"]:
+                writer.cldf.remove_columns(table_map[table]["url"], "Parameter_ID")
+                writer.cldf.add_columns(
+                    table_map[table]["url"],
+                    {
+                        "name": "Parameter_ID",
+                        "required": True,
+                        "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#parameterReference",
+                        "dc:description": f"A reference to the meaning denoted by the {table[0:-1]}.",
+                        "datatype": "string",
+                        "separator": "; ",
+                        "dc:extent": "multivalued",
                     },
                 )
             if table == "ExampleTable":

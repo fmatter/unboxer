@@ -100,9 +100,7 @@ def corpus(config_file, cldf, data_format, **kwargs):
             "There is no Language_ID specified in the configuration, please enter manually",
             type=str,
         )
-    extract_corpus(
-        conf=conf, cldf=cldf, **kwargs
-    )
+    extract_corpus(conf=conf, cldf=cldf, **kwargs)
 
 
 if __name__ == "__main__":

@@ -87,7 +87,7 @@ def extract_morphs(lexicon, sep):
         m_id = rec["ID"]
         try:
             dic = {
-                "Meaning": rec["Meaning"],
+                "Meaning": [rec["Meaning"]],
                 "Part_Of_Speech": rec["Part_Of_Speech"],
                 "Morpheme_ID": m_id,
             }
@@ -198,7 +198,9 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
     )
 
 
-def extract_corpus(filename=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None):
+def extract_corpus(
+    filename=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None
+):
     """Extract text records from a corpus.
 
     Args:
@@ -265,17 +267,19 @@ You can also explicitly set the correct file encoding in your config."""
                     morphs[morph_id] = {
                         "ID": morph_id,
                         "Form": obj,
-                        "Meaning": gloss.strip("-").strip("="),
+                        "Meaning": [gloss.strip("-").strip("=")],
                     }
         morphs = pd.DataFrame.from_dict(morphs.values())
         morphinder = Morphinder(morphs)
     wordforms, form_meanings, sentence_slices, morph_slices = build_slices(
         df, morphinder
     )
-    morph_meanings = {
-        string: {"ID": humidify(string, key="meanings"), "Name": string}
-        for string in set(morphs["Meaning"])
-    }
+    morph_meanings = {}
+    for meanings in morphs["Meaning"]:
+        for meaning in meanings:
+            morph_meanings.setdefault(
+                meaning, {"ID": humidify(meaning, key="meanings"), "Name": meaning}
+            )
     for col in df.columns:
         if col in conf["aligned_fields"]:
             df[col] = df[col].apply(_remove_spaces)
@@ -306,9 +310,7 @@ You can also explicitly set the correct file encoding in your config."""
             morphemes.to_csv((Path(output_dir) / "morphemes.csv"), index=False)
     if cldf:
         tables = {"ExampleTable": df}
-        tables[
-            "exampleparts"
-        ] = sentence_slices
+        tables["exampleparts"] = sentence_slices
         if lexicon:
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
@@ -318,7 +320,11 @@ You can also explicitly set the correct file encoding in your config."""
         if audio:
             tables["MediaTable"] = pd.DataFrame.from_dict(
                 [
-                    {"ID": f.stem, "Media_Type": "audio/"+f.suffix.strip("."), "Download_URL": str(f)}
+                    {
+                        "ID": f.stem,
+                        "Media_Type": "audio/" + f.suffix.strip("."),
+                        "Download_URL": str(f),
+                    }
                     for f in audio.iterdir()
                 ]
             )
@@ -330,7 +336,7 @@ You can also explicitly set the correct file encoding in your config."""
         )
         morphs["Description"] = morphs["Meaning"]
         morphs["Parameter_ID"] = morphs["Meaning"].apply(
-            lambda x: morph_meanings[x]["ID"]
+            lambda x: [morph_meanings[y]["ID"] for y in x]
         )
         tables["wordforms"] = wordforms
         morph_meanings = pd.DataFrame.from_dict(
@@ -367,7 +373,9 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     out = []
     sep = conf["cell_separator"]
     for record in records[1::]:
-        res = _get_fields(entry_marker + record, entry_marker, ["\a"], sep=sep)
+        res = _get_fields(
+            entry_marker + record, entry_marker, multiple=["\a", "\\glo"], sep=sep
+        )
         if res:
             out.append(res)
         else:
@@ -376,6 +384,7 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     df = pd.DataFrame.from_dict(out)
     df.rename(columns=conf["lexicon_mappings"], inplace=True)
     df.fillna("", inplace=True)
+    df["Meaning"] = df["Meaning"].apply(lambda x: x.split(sep))
     try:
         df["ID"] = df.apply(
             lambda x: humidify(f"{x['Headword']}-{x['Meaning']}", "form", unique=True),
