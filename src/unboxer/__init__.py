@@ -153,7 +153,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                         if m_id:
                             w_slices.append(
                                 {
-                                    "ID": f"{w_id}-{m_id}",
+                                    "ID": f"{w_id}-{m_id}-{m_idx}",
                                     "Wordform_ID": w_id,
                                     "Morph_ID": m_id,
                                     "Form_Meaning": meaning_id,
@@ -343,7 +343,7 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
         content = f.read()
     if entry_marker not in content:
         raise ValueError(
-            f"record_marker is defined as '{entry_marker}', which is not found in the database."
+            f"entry_marker is defined as '{entry_marker}', which is not found in the database."
         )
     records = content.split(entry_marker)
     out = []
