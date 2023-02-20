@@ -131,6 +131,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                         "ID": w_id,
                         "Form": w_obj.replace("-", ""),
                         "Gloss": w_gloss,
+                        "Description": w_gloss,
                         "Parameter_ID": humidify(w_gloss, "meanings"),
                         "Morpho_Segments": w_obj.split("-"),
                     }
@@ -307,9 +308,10 @@ You can also explicitly set the correct file encoding in your config."""
         tables = {"ExampleTable": df}
         tables[
             "exampleparts"
-        ] = sentence_slices  # .rename(columns={"Gloss": "Parameter_ID"})
+        ] = sentence_slices
         if lexicon:
             morphemes["Name"] = morphemes["Headword"]
+            morphemes["Description"] = morphemes["Meaning"]
             morphemes["Parameter_ID"] = morphemes["Meaning"].apply(
                 lambda x: morph_meanings[x]["ID"]
             )
@@ -326,6 +328,7 @@ You can also explicitly set the correct file encoding in your config."""
         tables["glosses"] = pd.DataFrame.from_dict(
             [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
         )
+        morphs["Description"] = morphs["Meaning"]
         morphs["Parameter_ID"] = morphs["Meaning"].apply(
             lambda x: morph_meanings[x]["ID"]
         )
