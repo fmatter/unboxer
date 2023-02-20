@@ -1,0 +1,160 @@
+\_sh v3.0  621  MDF 4.0
+
+\lx apaurai
+\ps n
+\ge apaurai
+\dt 28/Nov/2022
+
+\lx chinoro
+\ps adv
+\ge at first
+\dt 28/Nov/2022
+
+\lx ekama
+\ps vi
+\ge say
+\dt 28/Nov/2022
+
+\lx ekare
+\ps n
+\ge story
+\dt 28/Nov/2022
+
+\lx esi
+\ps vi
+\ge be
+\a e'
+\a echi
+\dt 28/Nov/2022
+
+\lx i-
+\ps pfx
+\ge 3
+\dt 28/Nov/2022
+
+\lx karuari
+\ps n
+\ge karuari
+\dt 28/Nov/2022
+
+\lx -kon
+\ps sfx
+\ge PL
+\dt 28/Nov/2022
+
+\lx kowamü
+\ps vi
+\ge delay
+\a kowam
+\dt 28/Nov/2022
+
+\lx m-
+\ps pfx
+\ge 2-
+\dt 28/Nov/2022
+
+\lx n-
+\ps pfx
+\ge 3
+\dt 28/Nov/2022
+
+\lx neke
+\ps ADV
+\ge NEG
+\dt 28/Nov/2022
+
+\lx pane
+\ps n
+\ge shore
+\dt 28/Nov/2022
+
+\lx pe
+\ps postp
+\ge ESS
+\dt 28/Nov/2022
+
+\lx penato
+\ps n
+\ge ancient
+\dt 28/Nov/2022
+
+\lx poi
+\ps postp
+\ge from
+\dt 28/Nov/2022
+
+\lx pök
+\ps postp
+\ge on
+\dt 28/Nov/2022
+
+\lx -pötü
+\ps sfx
+\ge PLAC
+\dt 28/Nov/2022
+
+\lx ri
+\ps n
+\ge river
+\dt 28/Nov/2022
+
+\lx -sakon
+\ps sfx
+\ge PL
+\dt 28/Nov/2022
+
+\lx sörö
+\ps dem
+\ge 3ANA.INAN
+\dt 28/Nov/2022
+
+\lx tepose
+\ps postp
+\ge towards
+\dt 28/Nov/2022
+
+\lx tok
+\ps pro
+\ge 3PL
+\dt 28/Nov/2022
+
+\lx töukin
+\ps adv
+\ge one
+\dt 28/Nov/2022
+
+\lx tüpü
+\ps n
+\ge rock
+\dt 28/Nov/2022
+
+\lx wakauyen
+\ps n
+\ge wakauyen
+\dt 28/Nov/2022
+
+\lx wakü
+\ps n
+\ge good
+\dt 28/Nov/2022
+
+\lx winüküy
+\ps postp
+\ge towards
+\dt 28/Nov/2022
+
+\lx yamu
+\ps n
+\ge headwaters
+\dt 28/Nov/2022
+
+\lx -yan
+\ps sfx
+\ge 2NPST.UNCERT
+\dt 28/Nov/2022
+
+\lx -'pö
+\ps sfx
+\ge PST
+\a -pö
+\dt 28/Nov/2022
