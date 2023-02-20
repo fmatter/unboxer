@@ -338,6 +338,7 @@ You can also explicitly set the correct file encoding in your config."""
 
 def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     database_file = Path(database_file)
+    conf["lexicon_mappings"]["\\"+conf["entry_marker"]] = "Headword"
     entry_marker = "\\" + conf["entry_marker"]
     with open(database_file, "r", encoding=conf["encoding"]) as f:
         content = f.read()
