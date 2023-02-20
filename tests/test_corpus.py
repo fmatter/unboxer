@@ -1,7 +1,7 @@
-"""Tests for the box2csv module.
+"""Tests for the unboxer module.
 """
 from click.testing import CliRunner
-from box2csv.cli import corpus
+from unboxer.cli import corpus
 from pycldf import Dataset
 
 

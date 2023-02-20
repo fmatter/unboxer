@@ -33,4 +33,4 @@ jobs:
       - name: Check style against standards using prospector
         run: prospector src
       - name: Check import order
-        run: isort --check-only src/box2csv --diff
+        run: isort --check-only src/unboxer --diff
