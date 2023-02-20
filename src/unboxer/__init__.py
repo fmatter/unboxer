@@ -84,11 +84,16 @@ def extract_morphs(lexicon, sep):
     morphemes = []
     for rec in lexicon.to_dict("records"):
         m_id = rec["ID"]
-        dic = {
+        try:
+            dic = {
             "Meaning": rec["Meaning"],
             "Part_Of_Speech": rec["Part_Of_Speech"],
             "Morpheme_ID": m_id,
-        }
+            }
+        except KeyError as e:
+            log.error(f"Please define {e} in lexicon_mappings in your conf.")
+            print(rec)
+            sys.exit()
         morphs.append({**{"Form": rec["Headword"], "ID": rec["ID"]}, **dic})
         if "Variants" in rec and rec["Variants"] != "":
             for c, x in enumerate(rec["Variants"].split(sep)):
@@ -359,10 +364,15 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     df = pd.DataFrame.from_dict(out)
     df.rename(columns=conf["lexicon_mappings"], inplace=True)
     df.fillna("", inplace=True)
-    df["ID"] = df.apply(
+    try:
+        df["ID"] = df.apply(
         lambda x: humidify(f"{x['Headword']}-{x['Meaning']}", "form", unique=True),
         axis=1,
     )
+    except KeyError as e:
+        log.error(f"Please define marker for {e} in lexicon_mappings in your conf.")
+        print(df)
+        sys.exit()
 
     if output_dir:
         df.to_csv(
