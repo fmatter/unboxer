@@ -196,7 +196,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
     )
 
 
-def extract_corpus(database_file, conf, lexicon=None, output_dir=".", cldf=False):
+def extract_corpus(filename=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None):
     """Extract text records from a corpus.
 
     Args:
@@ -204,7 +204,7 @@ def extract_corpus(database_file, conf, lexicon=None, output_dir=".", cldf=False
         conf (dict): Configuration (see) todo: insert link
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
-    database_file = Path(database_file)
+    database_file = Path(filename)
     record_marker = "\\" + conf["record_marker"]
     sep = conf["cell_separator"]
 
@@ -311,6 +311,13 @@ You can also explicitly set the correct file encoding in your config."""
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Parameter_ID"] = morphemes["Meaning"].apply(
                 lambda x: morph_meanings[x]["ID"]
+            )
+        if audio:
+            tables["MediaTable"] = pd.DataFrame.from_dict(
+                [
+                    {"ID": f.stem, "Media_Type": "audio/"+f.suffix.strip("."), "Download_URL": str(f)}
+                    for f in audio.iterdir()
+                ]
             )
 
         morphs["Name"] = morphs["Form"]

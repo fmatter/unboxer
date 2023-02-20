@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 def create_dataset(tables, conf, output_dir):
     table_map = {
-        default: default for default in ["ExampleTable", "ParameterTable", "FormTable"]
+        default: default for default in ["ExampleTable", "ParameterTable", "FormTable", "MediaTable"]
     }
 
     for component in components:

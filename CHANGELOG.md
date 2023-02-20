@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+* audio
+* [cldf-ldd](https://pypi.org/project/cldf-ldd)
+
 ### Fixed
 * renamed to `unboxer`
 * casting strings to path when using from a python script

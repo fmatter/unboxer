@@ -48,6 +48,13 @@ class ConvertCommand(click.Command):
                     show_default=True,
                     help="The format of the database you are processing",
                 ),
+                click.core.Option(
+                    ("-a", "--audio", "audio"),
+                    type=click.Path(exists=True, path_type=Path),
+                    default=None,
+                    show_default=True,
+                    help="A directory containing your audio files.",
+                ),
             ]
         )
 
@@ -83,7 +90,7 @@ def lexicon(filename, data_format, config_file, cldf, output_dir):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def corpus(filename, data_format, config_file, cldf, output_dir, lexicon):
+def corpus(config_file, cldf, data_format, **kwargs):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -94,7 +101,7 @@ def corpus(filename, data_format, config_file, cldf, output_dir, lexicon):
             type=str,
         )
     extract_corpus(
-        filename, output_dir=output_dir, conf=conf, cldf=cldf, lexicon=lexicon
+        conf=conf, cldf=cldf, **kwargs
     )
 
 
