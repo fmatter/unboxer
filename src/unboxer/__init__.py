@@ -52,6 +52,7 @@ def _get_fields(record, rec_marker, multiple, sep):
             out[marker] += " " + line
         elif " " in line:
             marker, content = line.split(" ", 1)
+            content = content.strip(" ")
             if marker in out:
                 if marker not in multiple:
                     out[marker] += " " + content
