@@ -117,8 +117,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
             meaning_id = humidify(w_gloss, "meanings")
             if meaning_id not in w_meanings:
                 w_meanings[meaning_id] = {"ID": meaning_id, "Name": w_gloss}
-            if w_id == "":
-                log.warning("EMPTY")
+            if w_obj == "":
                 continue
             if w_id not in wfs:
                 if w_gloss != "":
@@ -148,6 +147,9 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                             type_key="Part_Of_Speech",
                         )
                         del sense
+                        if morph_gloss == "":
+                            log.warning(f"Missing gloss for {morph_obj} in {sentence['ID']}")
+                            continue
                         if m_id:
                             w_slices.append(
                                 {
@@ -247,6 +249,8 @@ You can also explicitly set the correct file encoding in your config."""
             tdf[c] = df[c].apply(lambda x: re.split(r"\s+", x))
         for rec in tdf.to_dict("records"):
             for obj, gloss in zip(rec["Analyzed_Word"], rec["Gloss"]):
+                if obj == "":
+                    continue
                 morph_id = humidify(obj + "-" + gloss, key="pairs")
                 if morph_id not in morphs:
                     morphs[morph_id] = {
