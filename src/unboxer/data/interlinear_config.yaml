@@ -1,0 +1,7 @@
+aligned_fields: # Fields containing aligned text. Words will be aligned with tab stops in the output. Note that you need to use post-renaming labels.
+  - Analyzed_Word
+  - Gloss
+  - Part_Of_Speech
+slugify: true # Turn IDs (\ref) like "ConvInGarden.003" into "convingarden-003".
+fix_clitics: true # Remove spaces after proclitics and before enclitics.
+cell_separator: "; " # for allomorphs and such

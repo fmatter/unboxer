@@ -1,0 +1,15 @@
+record_marker: ref # The field holding text record identifiers. Note the absence of \ !
+encoding: utf-8 # The file encoding.
+interlinear_mappings: # The fields specified here will be renamed accordingly. Note the absence of \ !
+  tx: Primary_Text
+  mb: Analyzed_Word
+  ge: Gloss
+  ps: Part_Of_Speech
+  ft: Translated_Text
+entry_marker: lx
+lexicon_mappings:
+  lx: Headword
+  ps: Part_Of_Speech
+  ge: Meaning
+  dt: Date
+  a: Variants

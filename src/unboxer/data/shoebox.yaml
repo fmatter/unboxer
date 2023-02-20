@@ -1,0 +1,14 @@
+encoding: cp1252 # The file encoding.
+record_marker: ref # The field holding text record identifiers. Note the absence of \ !
+interlinear_mappings: # The fields specified here will be renamed accordingly. Note the absence of \ !
+  t: Primary_Text
+  m: Analyzed_Word
+  g: Gloss
+  p: Part_Of_Speech
+  f: Translated_Text
+  c: Comment
+entry_marker: lx
+lexicon_mappings:
+  lx: Headword
+  ps: Part_Of_Speech
+  ge: Meaning

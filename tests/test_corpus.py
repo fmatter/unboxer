@@ -25,7 +25,6 @@ from pycldf import Dataset
 #     assert ds.validate()
 
 
-
 def test_shoebox(data, tmp_path):
     runner = CliRunner()
     runner.invoke(
