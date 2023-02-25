@@ -34,19 +34,19 @@ def create_dataset(tables, conf, output_dir):
         writer.objects["LanguageTable"].append(get_lg(conf["Language_ID"]))
         for table, df in tables.items():
             writer.cldf.add_component(table_map[table])
-            if table in ["ExampleTable"]:
-                writer.cldf.remove_columns(
-                    table, "Language_ID"
-                )  # turn Language_ID into virtual columns
-                writer.cldf.add_columns(
-                    table,
-                    {
-                        "name": "Language_ID",
-                        "virtual": True,
-                        "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#glottocode",
-                        "valueUrl": conf["Language_ID"],
-                    },
-                )
+            # if table in ["ExampleTable"]:
+            #     writer.cldf.remove_columns(
+            #         table, "Language_ID"
+            #     )  # turn Language_ID into virtual columns
+            #     writer.cldf.add_columns(
+            #         table,
+            #         {
+            #             "name": "Language_ID",
+            #             "virtual": True,
+            #             "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#glottocode",
+            #             "valueUrl": conf["Language_ID"],
+            #         },
+            #     )
             if table in ["morphs", "morphemes"]:
                 writer.cldf.remove_columns(table_map[table]["url"], "Parameter_ID")
                 writer.cldf.add_columns(

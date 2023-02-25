@@ -292,6 +292,7 @@ You can also explicitly set the correct file encoding in your config."""
 
     wordforms["Language_ID"] = conf.get("Language_ID", "undefined")
     wordforms = wordforms[wordforms["Form"] != ""]
+    df["Language_ID"] = conf.get("Language_ID", "undefined")
 
     if lexicon:
         morphemes["Language_ID"] = conf.get("Language_ID", "undefined")
@@ -334,7 +335,7 @@ You can also explicitly set the correct file encoding in your config."""
         tables["glosses"] = pd.DataFrame.from_dict(
             [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
         )
-        morphs["Description"] = morphs["Meaning"]
+        morphs["Description"] = morphs["Meaning"].apply(lambda x: ", ".join(x))
         morphs["Parameter_ID"] = morphs["Meaning"].apply(
             lambda x: [morph_meanings[y]["ID"] for y in x]
         )
