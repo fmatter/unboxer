@@ -2,7 +2,7 @@ import logging
 import sys
 import pandas as pd
 from cldf_ldd import add_keys
-from cldf_ldd import components
+from cldf_ldd.components import tables as component_tables
 from cldfbench import CLDFSpec
 from cldfbench.cldf import CLDFWriter
 from pycldf.util import metadata2markdown
@@ -18,7 +18,7 @@ def create_dataset(tables, conf, output_dir):
         for default in ["ExampleTable", "ParameterTable", "FormTable", "MediaTable"]
     }
 
-    for component in components:
+    for component in component_tables:
         table_map[component["url"].replace(".csv", "")] = component
 
     def get_table_url(tablename):
@@ -113,7 +113,7 @@ def get_lg(lg_id):
 
 def get_data(lexicon, drop_variants=False, sep="; "):
     lexicon["Form"] = lexicon["Headword"]
-    lexicon["Meaning"] = lexicon["Meaning"].apply(lambda x: x.split(sep))
+    # lexicon["Meaning"] = lexicon["Meaning"].apply(lambda x: x.split(sep))
     meanings = list(_extract_meanings(list(lexicon["Meaning"])))
     meaning_dict = {
         meaning: _slugify(meaning, "meanings", ids=False) for meaning in meanings

@@ -87,7 +87,7 @@ def extract_morphs(lexicon, sep):
         m_id = rec["ID"]
         try:
             dic = {
-                "Meaning": [rec["Meaning"]],
+                "Meaning": rec["Meaning"],
                 "Part_Of_Speech": rec["Part_Of_Speech"],
                 "Morpheme_ID": m_id,
             }
@@ -316,7 +316,7 @@ You can also explicitly set the correct file encoding in your config."""
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
             morphemes["Parameter_ID"] = morphemes["Meaning"].apply(
-                lambda x: morph_meanings[x]["ID"]
+                lambda x: [morph_meanings[y]["ID"] for y in x]
             )
         if audio:
             tables["MediaTable"] = pd.DataFrame.from_dict(
