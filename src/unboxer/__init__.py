@@ -87,7 +87,7 @@ def extract_morphs(lexicon, sep):
         m_id = rec["ID"]
         try:
             dic = {
-                "Meaning": [rec["Meaning"]],
+                "Meaning": rec["Meaning"],
                 "Part_Of_Speech": rec["Part_Of_Speech"],
                 "Morpheme_ID": m_id,
             }
@@ -103,7 +103,9 @@ def extract_morphs(lexicon, sep):
     return pd.DataFrame.from_dict(morphemes), pd.DataFrame.from_dict(morphs)
 
 
-def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"):
+def build_slices(
+    df, morphinder=None, infl_info=None, obj_key="Analyzed_Word", gloss_key="Gloss"
+):
     df = df.copy()
     for c in [obj_key, gloss_key]:
         df[c] = df[c].apply(lambda x: re.sub(r"-\s+", "-INTERN", x))
@@ -112,7 +114,9 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
     wfs = {}
     w_slices = []
     s_slices = []
+    inflections = []
     w_meanings = {}
+    stems = {}
     for sentence in df.to_dict("records"):
         for s_idx, (obj, gloss) in enumerate(
             zip(sentence[obj_key], sentence[gloss_key])
@@ -160,9 +164,10 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                             )
                             continue
                         if m_id:
+                            slice_id = f"{w_id}-{m_id}-{m_idx}"
                             w_slices.append(
                                 {
-                                    "ID": f"{w_id}-{m_id}-{m_idx}",
+                                    "ID": slice_id,
                                     "Wordform_ID": w_id,
                                     "Morph_ID": m_id,
                                     "Form_Meaning": meaning_id,
@@ -172,6 +177,17 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                                     ),
                                     "Form": morph_obj,
                                     "Index": m_idx,
+                                }
+                            )
+                        for infl_value in infl_info["gloss_values"].get(
+                            morph_gloss, []
+                        ):
+                            inflections.append(
+                                {
+                                    "ID": humidify(f"{w_id}-{m_id}-{infl_value}"),
+                                    "Wordformpart_ID": [slice_id],
+                                    "Value_ID": infl_value,
+                                    # "Stem_ID": "xxx",
                                 }
                             )
             s_slices.append(
@@ -195,6 +211,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
         pd.DataFrame.from_dict(w_meanings.values()),
         pd.DataFrame.from_dict(s_slices),
         w_slices,
+        pd.DataFrame.from_dict(inflections),
     )
 
 
@@ -209,6 +226,19 @@ def extract_corpus(
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
     database_file = Path(filename)
+    infl_file = database_file.parents[0] / "inflections.csv"
+    if infl_file.is_file():
+        infl_glosses = pd.read_csv(infl_file)
+        infl_glosses["Value_ID"] = infl_glosses["Value_ID"].apply(
+            lambda x: x.split(",")
+        )
+        infl_values = pd.read_csv(infl_file.parents[0] / "inflectionalvalues.csv")
+        infl_categories = pd.read_csv(
+            infl_file.parents[0] / "inflectionalcategories.csv"
+        )
+        infl_info = {
+            "gloss_values": dict(zip(infl_glosses["Gloss"], infl_glosses["Value_ID"]))
+        }
     record_marker = "\\" + conf["record_marker"]
     sep = conf["cell_separator"]
 
@@ -271,9 +301,10 @@ You can also explicitly set the correct file encoding in your config."""
                     }
         morphs = pd.DataFrame.from_dict(morphs.values())
         morphinder = Morphinder(morphs)
-    wordforms, form_meanings, sentence_slices, morph_slices = build_slices(
-        df, morphinder
+    wordforms, form_meanings, sentence_slices, morph_slices, inflections = build_slices(
+        df, morphinder, infl_info
     )
+    print(inflections)
     morph_meanings = {}
     for meanings in morphs["Meaning"]:
         for meaning in meanings:
@@ -312,11 +343,16 @@ You can also explicitly set the correct file encoding in your config."""
     if cldf:
         tables = {"ExampleTable": df}
         tables["exampleparts"] = sentence_slices
+
+        if infl_file.is_file():
+            tables["inflections"] = inflections
+            tables["inflectionalvalues"] = infl_values
+            tables["inflectionalcategories"] = infl_categories
         if lexicon:
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
             morphemes["Parameter_ID"] = morphemes["Meaning"].apply(
-                lambda x: morph_meanings[x]["ID"]
+                lambda x: [morph_meanings[y]["ID"] for y in x]
             )
         if audio:
             tables["MediaTable"] = pd.DataFrame.from_dict(

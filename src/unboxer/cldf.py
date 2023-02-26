@@ -95,7 +95,9 @@ def _replace_meanings(label, meaning_dict):
 def get_lg(lg_id):
     try:
         import pyglottolog  # pylint: disable=import-outside-toplevel
-        from cldfbench.catalogs import Glottolog  # pylint: disable=import-outside-toplevel
+        from cldfbench.catalogs import (
+            Glottolog,
+        )  # pylint: disable=import-outside-toplevel
     except ImportError:
         log.error(
             "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can add a languages.csv file."
@@ -113,7 +115,6 @@ def get_lg(lg_id):
 
 def get_data(lexicon, drop_variants=False, sep="; "):
     lexicon["Form"] = lexicon["Headword"]
-    lexicon["Meaning"] = lexicon["Meaning"].apply(lambda x: x.split(sep))
     meanings = list(_extract_meanings(list(lexicon["Meaning"])))
     meaning_dict = {
         meaning: _slugify(meaning, "meanings", ids=False) for meaning in meanings

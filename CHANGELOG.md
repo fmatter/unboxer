@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * audio
-* [cldf-ldd](https://pypi.org/project/cldf-ldd)
+* using [cldf-ldd](https://pypi.org/project/cldf-ldd)
+
+### Changed
+* renamed to `unboxer`
 
 ### Fixed
-* renamed to `unboxer`
 * casting strings to path when using from a python script
 * leaving out records without any data
 * warning about duplicate records and removing them
