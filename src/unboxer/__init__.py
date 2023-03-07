@@ -335,7 +335,7 @@ You can also explicitly set the correct file encoding in your config."""
         tables["glosses"] = pd.DataFrame.from_dict(
             [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
         )
-        morphs["Description"] = morphs["Meaning"].apply(lambda x: ", ".join(x))
+        morphs["Description"] = morphs["Meaning"].apply(", ".join)
         morphs["Parameter_ID"] = morphs["Meaning"].apply(
             lambda x: [morph_meanings[y]["ID"] for y in x]
         )
