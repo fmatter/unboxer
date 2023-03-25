@@ -222,15 +222,16 @@ Make sure that you are not parsing a shoebox project as toolbox or vice versa.
 You can also explicitly set the correct file encoding in your config."""
         )
         sys.exit()
-    records = content.split(record_marker)
+    records = content.split(record_marker+" ")
     out = []
     for record in records[1::]:
-        res = _get_fields(record_marker + record, record_marker, multiple=[], sep=sep)
+        res = _get_fields(record_marker + " " + record, record_marker, multiple=[], sep=sep)
         if res:
             out.append(res)
         else:
-            log.warning("Empty record:")
-            log.warning(record)
+            pass
+            # log.warning("Empty record:")
+            # log.warning(record)
     df = pd.DataFrame.from_dict(out)
     if not df[record_marker].is_unique:
         log.warning("Found duplicate IDs, will only keep first of each:")
