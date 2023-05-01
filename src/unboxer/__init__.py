@@ -6,7 +6,7 @@ from pathlib import Path
 import colorlog
 import pandas as pd
 from humidifier import get_values
-from humidifier import humidify
+from humidifier import Humidifier, humidify
 from morphinder import Morphinder
 from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
@@ -26,6 +26,7 @@ log.addHandler(handler)
 __author__ = "Florian Matter"
 __email__ = "fmatter@mailbox.org"
 __version__ = "0.0.2.dev"
+
 
 
 def _remove_spaces(text):
@@ -362,6 +363,12 @@ You can also explicitly set the correct file encoding in your config."""
 
 
 def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
+
+    hum = Humidifier()
+
+    def humidify(*args, **kwargs):
+        return hum.humidify(*args, **kwargs)
+
     database_file = Path(database_file)
     conf["lexicon_mappings"]["\\" + conf["entry_marker"]] = "Headword"
     entry_marker = "\\" + conf["entry_marker"]
@@ -386,10 +393,9 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     df = pd.DataFrame.from_dict(out)
     df.rename(columns=conf["lexicon_mappings"], inplace=True)
     df.fillna("", inplace=True)
-    df["Meaning"] = df["Meaning"].apply(lambda x: x.split(sep))
     try:
         df["ID"] = df.apply(
-            lambda x: humidify(f"{x['Headword']}-{x['Meaning']}", "form", unique=True),
+            lambda x: humidify(f"{x['Headword']}-{x['Meaning'].split(sep)[0]}", "form", unique=True),
             axis=1,
         )
     except KeyError as e:
