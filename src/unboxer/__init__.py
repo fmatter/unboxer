@@ -133,7 +133,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                         "Form": w_obj.replace("-", ""),
                         "Gloss": w_gloss,
                         "Description": w_gloss,
-                        "Parameter_ID": humidify(w_gloss, "meanings"),
+                        "Parameter_ID": [humidify(w_gloss, "meanings")],
                         "Morpho_Segments": w_obj.split("-"),
                     }
                 if morphinder:
