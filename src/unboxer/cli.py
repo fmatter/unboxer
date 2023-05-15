@@ -64,7 +64,7 @@ class ConvertCommand(click.Command):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def lexicon(filename, data_format, config_file, cldf, output_dir):
+def lexicon(filename, data_format, config_file, cldf, output_dir, audio):
     if config_file:
         conf = load_config(config_file, data_format)
     else:

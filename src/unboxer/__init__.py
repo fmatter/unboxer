@@ -5,8 +5,9 @@ import sys
 from pathlib import Path
 import colorlog
 import pandas as pd
+from humidifier import Humidifier
 from humidifier import get_values
-from humidifier import Humidifier, humidify
+from humidifier import humidify
 from morphinder import Morphinder
 from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
@@ -26,7 +27,6 @@ log.addHandler(handler)
 __author__ = "Florian Matter"
 __email__ = "fmatter@mailbox.org"
 __version__ = "0.0.2.dev"
-
 
 
 def _remove_spaces(text):
@@ -223,10 +223,12 @@ Make sure that you are not parsing a shoebox project as toolbox or vice versa.
 You can also explicitly set the correct file encoding in your config."""
         )
         sys.exit()
-    records = content.split(record_marker+" ")
+    records = content.split(record_marker + " ")
     out = []
     for record in records[1::]:
-        res = _get_fields(record_marker + " " + record, record_marker, multiple=[], sep=sep)
+        res = _get_fields(
+            record_marker + " " + record, record_marker, multiple=[], sep=sep
+        )
         if res:
             out.append(res)
         else:
@@ -363,7 +365,6 @@ You can also explicitly set the correct file encoding in your config."""
 
 
 def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
-
     hum = Humidifier()
 
     def humidify(*args, **kwargs):
@@ -395,7 +396,9 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     df.fillna("", inplace=True)
     try:
         df["ID"] = df.apply(
-            lambda x: humidify(f"{x['Headword']}-{x['Meaning'].split(sep)[0]}", "form", unique=True),
+            lambda x: humidify(
+                f"{x['Headword']}-{x['Meaning'].split(sep)[0]}", "form", unique=True
+            ),
             axis=1,
         )
     except KeyError as e:
