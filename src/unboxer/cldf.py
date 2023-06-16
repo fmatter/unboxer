@@ -62,9 +62,15 @@ def create_dataset(tables, conf, output_dir):
                         "dc:extent": "multivalued",
                     },
                 )
+                # print(df[col])
+                # df[col] = df[col].apply(lambda x: x.split("; "))
+
             if table == "ExampleTable":
                 for col in conf["aligned_fields"]:
                     df[col] = df[col].apply(lambda x: x.split("\t"))
+            col="Parameter_ID"
+            if table in ["wordforms"]:
+                df[col] = df[col].apply(lambda x: "; ".join(x))
             log.info(table)
             for rec in tqdm(df.to_dict("records")):
                 writer.objects[get_table_url(table)].append(rec)
@@ -92,12 +98,12 @@ def create_cldf(tables, conf, output_dir):
 
 def _extract_meanings(meanings):
     for x in meanings:
-        for y in x:
+        for y in x.split("; "):
             yield y
 
 
 def _replace_meanings(label, meaning_dict):
-    return [meaning_dict[x] for x in label]
+    return [meaning_dict[x] for x in label.split("; ")]
 
 
 def get_lg(lg_id):
@@ -124,6 +130,7 @@ def get_data(lexicon, drop_variants=False, sep="; "):
     lexicon["Form"] = lexicon["Headword"]
     # lexicon["Meaning"] = lexicon["Meaning"].apply(lambda x: x.split(sep))
     meanings = list(_extract_meanings(list(lexicon["Meaning"])))
+    print(meanings)
     meaning_dict = {
         meaning: _slugify(meaning, "meanings", ids=False) for meaning in meanings
     }

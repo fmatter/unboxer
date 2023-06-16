@@ -253,6 +253,7 @@ You can also explicitly set the correct file encoding in your config."""
         df["ID"] = df.index
     df.fillna("", inplace=True)
 
+    df = df[df["Primary_Text"] != ""]
     if lexicon:
         lex_df = extract_lexicon(lexicon, conf=conf)
         morphemes, morphs = extract_morphs(lex_df, sep)
@@ -282,7 +283,7 @@ You can also explicitly set the correct file encoding in your config."""
     )
     morph_meanings = {}
     for meanings in morphs["Meaning"]:
-        for meaning in meanings:
+        for meaning in meanings.split("; "):
             morph_meanings.setdefault(
                 meaning, {"ID": humidify(meaning, key="meanings"), "Name": meaning}
             )
@@ -322,7 +323,7 @@ You can also explicitly set the correct file encoding in your config."""
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
             morphemes["Parameter_ID"] = morphemes["Meaning"].apply(
-                lambda x: [morph_meanings[y]["ID"] for y in x]
+                lambda x: [morph_meanings[y]["ID"] for y in x.split("; ")]
             )
         if audio:
             tables["MediaTable"] = pd.DataFrame.from_dict(
@@ -341,8 +342,8 @@ You can also explicitly set the correct file encoding in your config."""
         tables["glosses"] = pd.DataFrame.from_dict(
             [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
         )
-        morphs["Description"] = morphs["Meaning"].apply(", ".join)
-        morphs["Parameter_ID"] = morphs["Meaning"].apply(
+        morphs["Description"] = morphs["Meaning"].apply(lambda x: x.split("; "))
+        morphs["Parameter_ID"] = morphs["Description"].apply(
             lambda x: [morph_meanings[y]["ID"] for y in x]
         )
         tables["wordforms"] = wordforms
@@ -359,8 +360,10 @@ You can also explicitly set the correct file encoding in your config."""
         tables["wordformparts"] = morph_slices
         if lexicon:
             lexicon, meanings = get_data(lex_df)
+            print(meanings[meanings["Name"] == "When"])
+            # exit()
             tables["morphemes"] = morphemes
-            tables["ParameterTable"] = pd.concat([meanings, form_meanings])
+            tables["ParameterTable"] = pd.concat([meanings, morph_meanings, form_meanings])
             tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
         create_cldf(tables=tables, conf=conf, output_dir=output_dir)
     return df

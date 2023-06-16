@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * audio
 * [cldf-ldd](https://pypi.org/project/cldf-ldd)
+* better feedback
+* more speed
 
 ### Fixed
 * renamed to `unboxer`
