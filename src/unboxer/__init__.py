@@ -10,6 +10,7 @@ from humidifier import get_values
 from humidifier import humidify
 from morphinder import Morphinder
 from unboxer.cldf import create_cldf
+from tqdm import tqdm
 from unboxer.cldf import create_wordlist_cldf
 from unboxer.cldf import get_data
 
@@ -105,6 +106,7 @@ def extract_morphs(lexicon, sep):
 
 
 def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"):
+    log.info("Building slices")
     df = df.copy()
     for c in [obj_key, gloss_key]:
         df[c] = df[c].apply(lambda x: re.sub(r"-\s+", "-INTERN", x))
@@ -114,7 +116,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
     w_slices = []
     s_slices = []
     w_meanings = {}
-    for sentence in df.to_dict("records"):
+    for sentence in tqdm(df.to_dict("records")):
         for s_idx, (obj, gloss) in enumerate(
             zip(sentence[obj_key], sentence[gloss_key])
         ):

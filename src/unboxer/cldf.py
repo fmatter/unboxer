@@ -7,7 +7,8 @@ from cldfbench import CLDFSpec
 from cldfbench.cldf import CLDFWriter
 from pycldf.util import metadata2markdown
 from unboxer.helpers import _slugify
-
+from tqdm import tqdm
+import time
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +65,8 @@ def create_dataset(tables, conf, output_dir):
             if table == "ExampleTable":
                 for col in conf["aligned_fields"]:
                     df[col] = df[col].apply(lambda x: x.split("\t"))
-            for rec in df.to_dict("records"):
+            log.info(table)
+            for rec in tqdm(df.to_dict("records")):
                 writer.objects[get_table_url(table)].append(rec)
         writer.write()
         add_keys(writer.cldf)
@@ -75,7 +77,13 @@ def create_cldf(tables, conf, output_dir):
     if "Language_ID" not in conf:
         raise TypeError("Please specify a Language_ID in your configuration")
     ds = create_dataset(tables, conf, output_dir)
+
+    tick = time.perf_counter()
+    print("Validating...")
     ds.validate(log=log)
+    tock = time.perf_counter()
+    print(f"{tock - tick:0.4f} seconds")
+
     readme = metadata2markdown(ds, ds.directory)
     with open(ds.directory / "README.md", "w", encoding="utf-8") as f:
         f.write(readme)
@@ -93,6 +101,7 @@ def _replace_meanings(label, meaning_dict):
 
 
 def get_lg(lg_id):
+    return {"ID": lg_id, "Name": lg_id}
     try:
         import pyglottolog  # pylint: disable=import-outside-toplevel
         from cldfbench.catalogs import Glottolog  # pylint: disable=import-outside-toplevel
