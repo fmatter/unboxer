@@ -32,7 +32,11 @@ def create_dataset(tables, conf, output_dir):
     )
     with CLDFWriter(spec) as writer:
         writer.cldf.add_component("LanguageTable")
-        writer.objects["LanguageTable"].append(get_lg(conf["Language_ID"]))
+        if "language" in conf:
+            writer.objects["LanguageTable"].append(conf["language"])
+        else:
+            log.info(f"Retrieving data for language {conf['Language_ID']}")
+            writer.objects["LanguageTable"].append(get_lg(conf["Language_ID"]))
         for table, df in tqdm(tables.items(), desc="CLDF tables"):
             writer.cldf.add_component(table_map[table])
             if table in ["morphs", "morphemes"]:
@@ -65,6 +69,7 @@ def create_cldf(tables, conf, output_dir):
         raise TypeError("Please specify a Language_ID in your configuration")
 
     tick = time.perf_counter()
+    log.info("Creating CLDF dataset")
     ds = create_dataset(tables, conf, output_dir)
     tock = time.perf_counter()
     log.info(f"Created dataset {ds.directory.resolve()}/{ds.filename} in {tock - tick:0.4f} seconds")
@@ -91,7 +96,6 @@ def _replace_meanings(label, meaning_dict):
 
 
 def get_lg(lg_id):
-    return {"ID": lg_id, "Name": lg_id}
     try:
         import pyglottolog  # pylint: disable=import-outside-toplevel
         from cldfbench.catalogs import Glottolog  # pylint: disable=import-outside-toplevel

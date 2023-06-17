@@ -346,8 +346,14 @@ def extract_corpus(
 
         morphs["Name"] = morphs["Form"]
         if tokenize:
-            morphs["Segments"] = morphs["Form"].apply(lambda x: tokenize(x).split(" "))
-            wordforms["Segments"] = wordforms["Form"].apply(lambda x: tokenize(x).split(" "))
+            log.info("Tokenizing...")
+            for df in [morphs, wordforms]:
+                df["Segments"] = df["Form"].apply(lambda x: tokenize(x).split(" "))
+                bad = df[df["Segments"].apply(lambda x: "�" in x)]
+                if len(bad) > 1:
+                    print(bad)
+                    bad["Segments"] = ""
+                    df["Segments"] = df["Segments"].apply(lambda x: "" if "�" in x else x)
         morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
         tables["glosses"] = pd.DataFrame.from_dict(
             [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
@@ -373,7 +379,6 @@ def extract_corpus(
             tables["morphemes"] = morphemes
             tables["ParameterTable"] = pd.concat([meanings, morph_meanings, form_meanings])
             tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
-
         create_cldf(tables=tables, conf=conf, output_dir=output_dir)
     return df
 
