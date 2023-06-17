@@ -201,7 +201,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
 
 
 def extract_corpus(
-    filenames=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None, skip_empty_obj=False, complain=False
+    filenames=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None, skip_empty_obj=False, complain=False, tokenize=None
 ):
     """Extract text records from a corpus.
 
@@ -345,6 +345,9 @@ def extract_corpus(
             )
 
         morphs["Name"] = morphs["Form"]
+        if tokenize:
+            morphs["Segments"] = morphs["Form"].apply(lambda x: tokenize(x).split(" "))
+            wordforms["Segments"] = wordforms["Form"].apply(lambda x: tokenize(x).split(" "))
         morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
         tables["glosses"] = pd.DataFrame.from_dict(
             [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
