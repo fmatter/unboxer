@@ -7,8 +7,8 @@ from cldfbench import CLDFSpec
 from cldfbench.cldf import CLDFWriter
 from pycldf.util import metadata2markdown
 from unboxer.helpers import _slugify
-from tqdm import tqdm
 import time
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -33,21 +33,8 @@ def create_dataset(tables, conf, output_dir):
     with CLDFWriter(spec) as writer:
         writer.cldf.add_component("LanguageTable")
         writer.objects["LanguageTable"].append(get_lg(conf["Language_ID"]))
-        for table, df in tables.items():
+        for table, df in tqdm(tables.items(), desc="CLDF tables"):
             writer.cldf.add_component(table_map[table])
-            # if table in ["ExampleTable"]:
-            #     writer.cldf.remove_columns(
-            #         table, "Language_ID"
-            #     )  # turn Language_ID into virtual columns
-            #     writer.cldf.add_columns(
-            #         table,
-            #         {
-            #             "name": "Language_ID",
-            #             "virtual": True,
-            #             "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#glottocode",
-            #             "valueUrl": conf["Language_ID"],
-            #         },
-            #     )
             if table in ["morphs", "morphemes"]:
                 writer.cldf.remove_columns(table_map[table]["url"], "Parameter_ID")
                 writer.cldf.add_columns(
@@ -62,18 +49,12 @@ def create_dataset(tables, conf, output_dir):
                         "dc:extent": "multivalued",
                     },
                 )
-                # print(df[col])
-                # df[col] = df[col].apply(lambda x: x.split("; "))
-
             if table == "ExampleTable":
                 for col in conf["aligned_fields"]:
                     df[col] = df[col].apply(lambda x: x.split("\t"))
-            col="Parameter_ID"
-            if table in ["wordforms"]:
-                df[col] = df[col].apply(lambda x: "; ".join(x))
-            log.info(table)
-            for rec in tqdm(df.to_dict("records")):
+            for rec in df.to_dict("records"):
                 writer.objects[get_table_url(table)].append(rec)
+        log.info("Creating dataset")
         writer.write()
         add_keys(writer.cldf)
         return writer.cldf
@@ -82,18 +63,21 @@ def create_dataset(tables, conf, output_dir):
 def create_cldf(tables, conf, output_dir):
     if "Language_ID" not in conf:
         raise TypeError("Please specify a Language_ID in your configuration")
-    ds = create_dataset(tables, conf, output_dir)
 
     tick = time.perf_counter()
-    print("Validating...")
-    ds.validate(log=log)
+    ds = create_dataset(tables, conf, output_dir)
     tock = time.perf_counter()
-    print(f"{tock - tick:0.4f} seconds")
+    log.info(f"Created dataset {ds.directory.resolve()}/{ds.filename} in {tock - tick:0.4f} seconds")
+
+    tick = time.perf_counter()
+    log.info("Validating...")
+    # ds.validate(log=log)
+    tock = time.perf_counter()
+    log.info(f"Validated in {tock - tick:0.4f} seconds")
 
     readme = metadata2markdown(ds, ds.directory)
     with open(ds.directory / "README.md", "w", encoding="utf-8") as f:
         f.write(readme)
-    log.info(f"Created cldf dataset at {ds.directory.resolve()}/{ds.filename}")
 
 
 def _extract_meanings(meanings):
@@ -130,7 +114,6 @@ def get_data(lexicon, drop_variants=False, sep="; "):
     lexicon["Form"] = lexicon["Headword"]
     # lexicon["Meaning"] = lexicon["Meaning"].apply(lambda x: x.split(sep))
     meanings = list(_extract_meanings(list(lexicon["Meaning"])))
-    print(meanings)
     meaning_dict = {
         meaning: _slugify(meaning, "meanings", ids=False) for meaning in meanings
     }

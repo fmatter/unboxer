@@ -106,7 +106,6 @@ def extract_morphs(lexicon, sep):
 
 
 def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"):
-    log.info("Building slices")
     df = df.copy()
     for c in [obj_key, gloss_key]:
         df[c] = df[c].apply(lambda x: re.sub(r"-\s+", "-INTERN", x))
@@ -116,7 +115,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
     w_slices = []
     s_slices = []
     w_meanings = {}
-    for sentence in tqdm(df.to_dict("records")):
+    for sentence in tqdm(df.to_dict("records"), desc="Building slices"):
         for s_idx, (obj, gloss) in enumerate(
             zip(sentence[obj_key], sentence[gloss_key])
         ):
@@ -202,7 +201,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
 
 
 def extract_corpus(
-    filename=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None
+    filenames=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None, skip_empty_obj=False, complain=False
 ):
     """Extract text records from a corpus.
 
@@ -211,53 +210,61 @@ def extract_corpus(
         conf (dict): Configuration (see) todo: insert link
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
-    database_file = Path(filename)
-    record_marker = "\\" + conf["record_marker"]
-    sep = conf["cell_separator"]
-
-    try:
-        with open(database_file, "r", encoding=conf["encoding"]) as f:
-            content = f.read()
-    except UnicodeDecodeError:
-        log.error(
-            f"""Could not open the file with the encoding [{conf["encoding"]}].
-Make sure that you are not parsing a shoebox project as toolbox or vice versa.
-You can also explicitly set the correct file encoding in your config."""
-        )
-        sys.exit()
-    records = content.split(record_marker + " ")
+    if not isinstance(filenames, list):
+        filenames = [filenames]
     out = []
-    for record in records[1::]:
-        res = _get_fields(
-            record_marker + " " + record, record_marker, multiple=[], sep=sep
-        )
-        if res:
-            out.append(res)
-        else:
-            pass
-            # log.warning("Empty record:")
-            # log.warning(record)
+    for filename in filenames:
+        database_file = Path(filename)
+        record_marker = "\\" + conf["record_marker"]
+        sep = conf["cell_separator"]
+    
+        try:
+            with open(database_file, "r", encoding=conf["encoding"]) as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            log.error(
+                f"""Could not open the file with the encoding [{conf["encoding"]}].
+    Make sure that you are not parsing a shoebox project as toolbox or vice versa.
+    You can also explicitly set the correct file encoding in your config."""
+            )
+            sys.exit()
+        records = content.split(record_marker + " ")
+        for record in records[1::]:
+            res = _get_fields(
+                record_marker + " " + record, record_marker, multiple=[], sep=sep
+            )
+            if res:
+                out.append(res)
+            else:
+                pass
+                # log.warning("Empty record:")
+                # log.warning(record)
     df = pd.DataFrame.from_dict(out)
     if not df[record_marker].is_unique:
-        log.warning("Found duplicate IDs, will only keep first of each:")
+        if complain:
+            log.warning("Found duplicate IDs, will only keep first of each:")
         dupes = df[df.duplicated(record_marker)]
         print(dupes)
         df.drop_duplicates(record_marker, inplace=True)
     df.rename(columns=conf["interlinear_mappings"], inplace=True)
     if "Analyzed_Word" not in df.columns:
         raise ValueError("Did not find Analyzed_Word:", conf["interlinear_mappings"])
+    if skip_empty_obj:
+        old = len(df)
+        df = df[df["Gloss"] != ""]
+        log.info(f"Dropped {old-len(df)} unparsed records.")
     if "ID" in df:
         if conf["slugify"]:
-            df["ID"] = df["ID"].apply(lambda x: humidify(x, "sentence_id", unique=True))
+            tqdm.pandas(desc="Creating record IDs")
+            df["ID"] = df["ID"].progress_apply(lambda x: humidify(x, "sentence_id", unique=True))
     else:
         df["ID"] = df.index
     df.fillna("", inplace=True)
-
     df = df[df["Primary_Text"] != ""]
     if lexicon:
         lex_df = extract_lexicon(lexicon, conf=conf)
         morphemes, morphs = extract_morphs(lex_df, sep)
-        morphinder = Morphinder(morphs)
+        morphinder = Morphinder(morphs, complain=complain)
     else:
         tdf = df.copy()
         morphs = {}
@@ -277,21 +284,22 @@ You can also explicitly set the correct file encoding in your config."""
                         "Meaning": [gloss.strip("-").strip("=")],
                     }
         morphs = pd.DataFrame.from_dict(morphs.values())
-        morphinder = Morphinder(morphs)
+        morphinder = Morphinder(morphs, complain=complain)
     wordforms, form_meanings, sentence_slices, morph_slices = build_slices(
         df, morphinder
     )
     morph_meanings = {}
-    for meanings in morphs["Meaning"]:
+    for meanings in tqdm(morphs["Meaning"], desc="Morphs"):
         for meaning in meanings.split("; "):
             morph_meanings.setdefault(
                 meaning, {"ID": humidify(meaning, key="meanings"), "Name": meaning}
             )
-    for col in df.columns:
+    for col in tqdm(df.columns, desc="Columns"):
         if col in conf["aligned_fields"]:
             df[col] = df[col].apply(_remove_spaces)
     df = df.apply(_fix_glosses, axis=1)
     if conf["fix_clitics"]:
+        log.info("Fixing clitics")
         for col in conf["aligned_fields"]:
             df[col] = df[col].apply(_fix_clitics)
     if "Primary_Text" in df.columns:
@@ -308,7 +316,6 @@ You can also explicitly set the correct file encoding in your config."""
         log.warning("Duplicate IDs in morph table, only keeping first instances:")
         log.warning(morphs[morphs.duplicated(subset="ID", keep=False)])
         morphs.drop_duplicates(subset="ID", inplace=True)
-
     if output_dir:
         df.to_csv(
             (Path(output_dir) / database_file.name).with_suffix(".csv"), index=False
@@ -360,11 +367,10 @@ You can also explicitly set the correct file encoding in your config."""
         tables["wordformparts"] = morph_slices
         if lexicon:
             lexicon, meanings = get_data(lex_df)
-            print(meanings[meanings["Name"] == "When"])
-            # exit()
             tables["morphemes"] = morphemes
             tables["ParameterTable"] = pd.concat([meanings, morph_meanings, form_meanings])
             tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
+
         create_cldf(tables=tables, conf=conf, output_dir=output_dir)
     return df
 
