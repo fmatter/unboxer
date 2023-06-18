@@ -178,7 +178,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
                             )
             s_slices.append(
                 {
-                    "ID": f"{sentence['ID']}{s_idx}",
+                    "ID": f"{sentence['ID']}-{s_idx}",
                     "Example_ID": sentence["ID"],
                     "Wordform_ID": w_id,
                     "Form": w_obj.replace("-", ""),
