@@ -58,6 +58,9 @@ def create_dataset(tables, conf, output_dir):
                     df[col] = df[col].apply(lambda x: x.split("\t"))
             for rec in df.to_dict("records"):
                 writer.objects[get_table_url(table)].append(rec)
+        if "sources" in conf:
+            writer.cldf.add_sources(*conf["sources"])
+
         log.info("Creating dataset")
         writer.write()
         add_keys(writer.cldf)

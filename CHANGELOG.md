@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [cldf-ldd](https://pypi.org/project/cldf-ldd)
 * better feedback
 * more speed
+* adding sources
 
 ### Fixed
 * renamed to `unboxer`

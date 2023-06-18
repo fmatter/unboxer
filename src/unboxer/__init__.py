@@ -352,7 +352,6 @@ def extract_corpus(
                 bad = df[df["Segments"].apply(lambda x: "�" in x)]
                 if len(bad) > 1:
                     print(bad)
-                    bad["Segments"] = ""
                     df["Segments"] = df["Segments"].apply(lambda x: "" if "�" in x else x)
         morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
         tables["glosses"] = pd.DataFrame.from_dict(
