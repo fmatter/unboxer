@@ -1,19 +1,20 @@
 import logging
 import sys
+import time
 import pandas as pd
 from cldf_ldd import add_keys
 from cldf_ldd.components import tables as component_tables
 from cldfbench import CLDFSpec
 from cldfbench.cldf import CLDFWriter
 from pycldf.util import metadata2markdown
-from unboxer.helpers import _slugify
-import time
 from tqdm import tqdm
+from unboxer.helpers import _slugify
+
 
 log = logging.getLogger(__name__)
 
 
-def create_dataset(tables, conf, output_dir):
+def create_dataset(tables, conf, output_dir, cldf_name="cldf"):
     table_map = {
         default: default
         for default in ["ExampleTable", "ParameterTable", "FormTable", "MediaTable"]
@@ -28,7 +29,7 @@ def create_dataset(tables, conf, output_dir):
         return table_map[tablename]["url"]
 
     spec = CLDFSpec(
-        dir=output_dir / "cldf", module="Generic", metadata_fname="metadata.json"
+        dir=output_dir / cldf_name, module="Generic", metadata_fname="metadata.json"
     )
     with CLDFWriter(spec) as writer:
         writer.cldf.add_component("LanguageTable")
@@ -38,6 +39,9 @@ def create_dataset(tables, conf, output_dir):
             log.info(f"Retrieving data for language {conf['Language_ID']}")
             writer.objects["LanguageTable"].append(get_lg(conf["Language_ID"]))
         for table, df in tqdm(tables.items(), desc="CLDF tables"):
+            if len(df) == 0:
+                log.warning(f"{table} is empty")
+                continue
             writer.cldf.add_component(table_map[table])
             if table in ["morphs", "morphemes"]:
                 writer.cldf.remove_columns(table_map[table]["url"], "Parameter_ID")
@@ -67,15 +71,17 @@ def create_dataset(tables, conf, output_dir):
         return writer.cldf
 
 
-def create_cldf(tables, conf, output_dir):
+def create_cldf(tables, conf, output_dir, cldf_name="cldf"):
     if "Language_ID" not in conf:
         raise TypeError("Please specify a Language_ID in your configuration")
 
     tick = time.perf_counter()
     log.info("Creating CLDF dataset")
-    ds = create_dataset(tables, conf, output_dir)
+    ds = create_dataset(tables, conf, output_dir, cldf_name=cldf_name)
     tock = time.perf_counter()
-    log.info(f"Created dataset {ds.directory.resolve()}/{ds.filename} in {tock - tick:0.4f} seconds")
+    log.info(
+        f"Created dataset {ds.directory.resolve()}/{ds.filename} in {tock - tick:0.4f} seconds"
+    )
 
     tick = time.perf_counter()
     log.info("Validating...")

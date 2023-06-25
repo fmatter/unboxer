@@ -9,8 +9,8 @@ from humidifier import Humidifier
 from humidifier import get_values
 from humidifier import humidify
 from morphinder import Morphinder
-from unboxer.cldf import create_cldf
 from tqdm import tqdm
+from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
 from unboxer.cldf import get_data
 
@@ -201,7 +201,18 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
 
 
 def extract_corpus(
-    filenames=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None, skip_empty_obj=False, complain=False, tokenize=None
+    filenames=None,
+    conf=None,
+    lexicon=None,
+    output_dir=".",
+    cldf=False,
+    audio=None,
+    skip_empty_obj=False,
+    complain=False,
+    tokenize=None,
+    exclude=None,
+    include="all",
+    cldf_name="cldf",
 ):
     """Extract text records from a corpus.
 
@@ -217,7 +228,7 @@ def extract_corpus(
         database_file = Path(filename)
         record_marker = "\\" + conf["record_marker"]
         sep = conf["cell_separator"]
-    
+
         try:
             with open(database_file, "r", encoding=conf["encoding"]) as f:
                 content = f.read()
@@ -253,14 +264,24 @@ def extract_corpus(
         old = len(df)
         df = df[df["Gloss"] != ""]
         log.info(f"Dropped {old-len(df)} unparsed records.")
+    df.fillna("", inplace=True)
+    df = df[df["Primary_Text"] != ""]
     if "ID" in df:
         if conf["slugify"]:
             tqdm.pandas(desc="Creating record IDs")
-            df["ID"] = df["ID"].progress_apply(lambda x: humidify(x, "sentence_id", unique=True))
+            df["ID"] = df["ID"].progress_apply(
+                lambda x: humidify(x, "sentence_id", unique=True)
+            )
     else:
         df["ID"] = df.index
-    df.fillna("", inplace=True)
-    df = df[df["Primary_Text"] != ""]
+
+    if include != "all":
+        rec_list = include
+    elif exclude:
+        rec_list = list(df["ID"]) - exclude
+    else:
+        rec_list = list(df["ID"])
+    df = df[df["ID"].isin(rec_list)]
     if lexicon:
         lex_df = extract_lexicon(lexicon, conf=conf)
         morphemes, morphs = extract_morphs(lex_df, sep)
@@ -305,8 +326,9 @@ def extract_corpus(
     if "Primary_Text" in df.columns:
         df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))
 
-    wordforms["Language_ID"] = conf.get("Language_ID", "undefined")
-    wordforms = wordforms[wordforms["Form"] != ""]
+    if len(wordforms) > 0:
+        wordforms["Language_ID"] = conf.get("Language_ID", "undefined")
+        wordforms = wordforms[wordforms["Form"] != ""]
     df["Language_ID"] = conf.get("Language_ID", "undefined")
 
     if lexicon:
@@ -347,38 +369,51 @@ def extract_corpus(
         morphs["Name"] = morphs["Form"]
         if tokenize:
             log.info("Tokenizing...")
-            for df in [morphs, wordforms]:
-                df["Segments"] = df["Form"].apply(lambda x: tokenize(x).split(" "))
-                bad = df[df["Segments"].apply(lambda x: "�" in x)]
-                if len(bad) > 1:
-                    print(bad)
-                    df["Segments"] = df["Segments"].apply(lambda x: "" if "�" in x else x)
-        morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
-        tables["glosses"] = pd.DataFrame.from_dict(
-            [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
-        )
+            for df in [wordforms, morphs]:
+                if len(df) > 0:
+                    for orig, repl in conf.get("replace", {}).items():
+                        df["Form"] = df["Form"].replace(orig, repl, regex=True)
+                    df["Segments"] = df["Form"].apply(lambda x: tokenize(x).split(" "))
+                    bad = df[df["Segments"].apply(lambda x: "�" in x)]
+                    if len(bad) > 1:
+                        log.warning("Unsegmentable")
+                        print(bad)
+                        df["Segments"] = df["Segments"].apply(
+                            lambda x: "" if "�" in x else x
+                        )
+        if len(morph_slices) > 0:
+            morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
+            tables["glosses"] = pd.DataFrame.from_dict(
+                [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
+            )
         morphs["Description"] = morphs["Meaning"].apply(lambda x: x.split("; "))
         morphs["Parameter_ID"] = morphs["Description"].apply(
             lambda x: [morph_meanings[y]["ID"] for y in x]
         )
-        tables["wordforms"] = wordforms
-        morph_meanings = pd.DataFrame.from_dict(
-            [
-                x
-                for x in morph_meanings.values()
-                if x["ID"] not in list(form_meanings["ID"])
-            ]
-        )
-        tables["ParameterTable"] = pd.concat([form_meanings, morph_meanings])
-        sentence_slices["Form_Meaning"] = sentence_slices["Gloss"]
+        if len(form_meanings) > 0:
+            morph_meanings = pd.DataFrame.from_dict(
+                [
+                    x
+                    for x in morph_meanings.values()
+                    if x["ID"] not in list(form_meanings["ID"])
+                ]
+            )
+            tables["ParameterTable"] = pd.concat([form_meanings, morph_meanings])
+        else:
+            morph_meanings = pd.DataFrame.from_dict(morph_meanings.values())
+            tables["ParameterTable"] = morph_meanings
+        if len(wordforms) > 0:
+            tables["wordforms"] = wordforms
         tables["morphs"] = morphs
         tables["wordformparts"] = morph_slices
         if lexicon:
             lexicon, meanings = get_data(lex_df)
             tables["morphemes"] = morphemes
-            tables["ParameterTable"] = pd.concat([meanings, morph_meanings, form_meanings])
+            tables["ParameterTable"] = pd.concat([meanings, tables["ParameterTable"]])
             tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
-        create_cldf(tables=tables, conf=conf, output_dir=output_dir)
+        create_cldf(
+            tables=tables, conf=conf, output_dir=output_dir, cldf_name=cldf_name
+        )
     return df
 
 

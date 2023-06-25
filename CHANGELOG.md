@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * better feedback
 * more speed
 * adding sources
+* ex- or including text records
+* replace characters in forms
 
 ### Fixed
 * renamed to `unboxer`
