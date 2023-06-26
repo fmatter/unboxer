@@ -64,7 +64,7 @@ class ConvertCommand(click.Command):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def lexicon(filename, data_format, config_file, cldf, output_dir):
+def lexicon(filename, data_format, config_file, cldf, output_dir, audio):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -90,7 +90,7 @@ def lexicon(filename, data_format, config_file, cldf, output_dir):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def corpus(config_file, cldf, data_format, **kwargs):
+def corpus(filename, config_file, cldf, data_format, **kwargs):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -100,7 +100,7 @@ def corpus(config_file, cldf, data_format, **kwargs):
             "There is no Language_ID specified in the configuration, please enter manually",
             type=str,
         )
-    extract_corpus(conf=conf, cldf=cldf, **kwargs)
+    extract_corpus(filename, conf=conf, cldf=cldf, **kwargs)
 
 
 if __name__ == "__main__":

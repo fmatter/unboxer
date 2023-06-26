@@ -5,9 +5,11 @@ import sys
 from pathlib import Path
 import colorlog
 import pandas as pd
+from humidifier import Humidifier
 from humidifier import get_values
 from humidifier import humidify
 from morphinder import Morphinder
+from tqdm import tqdm
 from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
 from unboxer.cldf import get_data
@@ -116,8 +118,8 @@ def build_slices(
     s_slices = []
     inflections = []
     w_meanings = {}
-    stems = {}
-    for sentence in df.to_dict("records"):
+    found_stems = {}
+    for sentence in tqdm(df.to_dict("records"), desc="Building slices"):
         for s_idx, (obj, gloss) in enumerate(
             zip(sentence[obj_key], sentence[gloss_key])
         ):
@@ -136,7 +138,7 @@ def build_slices(
                         "Form": w_obj.replace("-", ""),
                         "Gloss": w_gloss,
                         "Description": w_gloss,
-                        "Parameter_ID": humidify(w_gloss, "meanings"),
+                        "Parameter_ID": [humidify(w_gloss, "meanings")],
                         "Morpho_Segments": w_obj.split("-"),
                     }
                 if morphinder:
@@ -192,7 +194,7 @@ def build_slices(
                             )
             s_slices.append(
                 {
-                    "ID": f"{sentence['ID']}{s_idx}",
+                    "ID": f"{sentence['ID']}-{s_idx}",
                     "Example_ID": sentence["ID"],
                     "Wordform_ID": w_id,
                     "Form": w_obj.replace("-", ""),
@@ -216,7 +218,19 @@ def build_slices(
 
 
 def extract_corpus(
-    filename=None, conf=None, lexicon=None, output_dir=".", cldf=False, audio=None
+    filenames=None,
+    conf=None,
+    lexicon=None,
+    output_dir=".",
+    cldf=False,
+    audio=None,
+    skip_empty_obj=False,
+    complain=False,
+    tokenize=None,
+    exclude=None,
+    inflection=None,
+    include="all",
+    cldf_name="cldf",
 ):
     """Extract text records from a corpus.
 
@@ -225,62 +239,71 @@ def extract_corpus(
         conf (dict): Configuration (see) todo: insert link
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
-    database_file = Path(filename)
-    infl_file = database_file.parents[0] / "inflections.csv"
-    if infl_file.is_file():
-        infl_glosses = pd.read_csv(infl_file)
-        infl_glosses["Value_ID"] = infl_glosses["Value_ID"].apply(
-            lambda x: x.split(",")
-        )
-        infl_values = pd.read_csv(infl_file.parents[0] / "inflectionalvalues.csv")
-        infl_categories = pd.read_csv(
-            infl_file.parents[0] / "inflectionalcategories.csv"
-        )
-        infl_info = {
-            "gloss_values": dict(zip(infl_glosses["Gloss"], infl_glosses["Value_ID"]))
-        }
-    record_marker = "\\" + conf["record_marker"]
-    sep = conf["cell_separator"]
-
-    try:
-        with open(database_file, "r", encoding=conf["encoding"]) as f:
-            content = f.read()
-    except UnicodeDecodeError:
-        log.error(
-            f"""Could not open the file with the encoding [{conf["encoding"]}].
-Make sure that you are not parsing a shoebox project as toolbox or vice versa.
-You can also explicitly set the correct file encoding in your config."""
-        )
-        sys.exit()
-    records = content.split(record_marker)
+    if not isinstance(filenames, list):
+        filenames = [filenames]
     out = []
-    for record in records[1::]:
-        res = _get_fields(record_marker + record, record_marker, multiple=[], sep=sep)
-        if res:
-            out.append(res)
-        else:
-            log.warning("Empty record:")
-            log.warning(record)
+    for filename in filenames:
+        database_file = Path(filename)
+        record_marker = "\\" + conf["record_marker"]
+        sep = conf["cell_separator"]
+
+        try:
+            with open(database_file, "r", encoding=conf["encoding"]) as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            log.error(
+                f"""Could not open the file with the encoding [{conf["encoding"]}].
+    Make sure that you are not parsing a shoebox project as toolbox or vice versa.
+    You can also explicitly set the correct file encoding in your config."""
+            )
+            sys.exit()
+        records = content.split(record_marker + " ")
+        for record in records[1::]:
+            res = _get_fields(
+                record_marker + " " + record, record_marker, multiple=[], sep=sep
+            )
+            if res:
+                out.append(res)
+            else:
+                pass
+                # log.warning("Empty record:")
+                # log.warning(record)
     df = pd.DataFrame.from_dict(out)
     if not df[record_marker].is_unique:
-        log.warning("Found duplicate IDs, will only keep first of each:")
+        if complain:
+            log.warning("Found duplicate IDs, will only keep first of each:")
         dupes = df[df.duplicated(record_marker)]
         print(dupes)
         df.drop_duplicates(record_marker, inplace=True)
     df.rename(columns=conf["interlinear_mappings"], inplace=True)
     if "Analyzed_Word" not in df.columns:
         raise ValueError("Did not find Analyzed_Word:", conf["interlinear_mappings"])
+    if skip_empty_obj:
+        old = len(df)
+        df = df[df["Gloss"] != ""]
+        log.info(f"Dropped {old-len(df)} unparsed records.")
+    df.fillna("", inplace=True)
+    df = df[df["Primary_Text"] != ""]
     if "ID" in df:
         if conf["slugify"]:
-            df["ID"] = df["ID"].apply(lambda x: humidify(x, "sentence_id", unique=True))
+            tqdm.pandas(desc="Creating record IDs")
+            df["ID"] = df["ID"].progress_apply(
+                lambda x: humidify(x, "sentence_id", unique=True)
+            )
     else:
         df["ID"] = df.index
-    df.fillna("", inplace=True)
 
+    if include != "all":
+        rec_list = include
+    elif exclude:
+        rec_list = list(df["ID"]) - exclude
+    else:
+        rec_list = list(df["ID"])
+    df = df[df["ID"].isin(rec_list)]
     if lexicon:
         lex_df = extract_lexicon(lexicon, conf=conf)
         morphemes, morphs = extract_morphs(lex_df, sep)
-        morphinder = Morphinder(morphs)
+        morphinder = Morphinder(morphs, complain=complain)
     else:
         tdf = df.copy()
         morphs = {}
@@ -300,29 +323,31 @@ You can also explicitly set the correct file encoding in your config."""
                         "Meaning": [gloss.strip("-").strip("=")],
                     }
         morphs = pd.DataFrame.from_dict(morphs.values())
-        morphinder = Morphinder(morphs)
-    wordforms, form_meanings, sentence_slices, morph_slices, inflections = build_slices(
-        df, morphinder, infl_info
+        morphinder = Morphinder(morphs, complain=complain)
+    wordforms, form_meanings, sentence_slices, morph_slices = build_slices(
+        df, morphinder
     )
     print(inflections)
     morph_meanings = {}
-    for meanings in morphs["Meaning"]:
-        for meaning in meanings:
+    for meanings in tqdm(morphs["Meaning"], desc="Morphs"):
+        for meaning in meanings.split("; "):
             morph_meanings.setdefault(
                 meaning, {"ID": humidify(meaning, key="meanings"), "Name": meaning}
             )
-    for col in df.columns:
+    for col in tqdm(df.columns, desc="Columns"):
         if col in conf["aligned_fields"]:
             df[col] = df[col].apply(_remove_spaces)
     df = df.apply(_fix_glosses, axis=1)
     if conf["fix_clitics"]:
+        log.info("Fixing clitics")
         for col in conf["aligned_fields"]:
             df[col] = df[col].apply(_fix_clitics)
     if "Primary_Text" in df.columns:
         df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))
 
-    wordforms["Language_ID"] = conf.get("Language_ID", "undefined")
-    wordforms = wordforms[wordforms["Form"] != ""]
+    if len(wordforms) > 0:
+        wordforms["Language_ID"] = conf.get("Language_ID", "undefined")
+        wordforms = wordforms[wordforms["Form"] != ""]
     df["Language_ID"] = conf.get("Language_ID", "undefined")
 
     if lexicon:
@@ -332,7 +357,6 @@ You can also explicitly set the correct file encoding in your config."""
         log.warning("Duplicate IDs in morph table, only keeping first instances:")
         log.warning(morphs[morphs.duplicated(subset="ID", keep=False)])
         morphs.drop_duplicates(subset="ID", inplace=True)
-
     if output_dir:
         df.to_csv(
             (Path(output_dir) / database_file.name).with_suffix(".csv"), index=False
@@ -352,7 +376,7 @@ You can also explicitly set the correct file encoding in your config."""
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
             morphemes["Parameter_ID"] = morphemes["Meaning"].apply(
-                lambda x: [morph_meanings[y]["ID"] for y in x]
+                lambda x: [morph_meanings[y]["ID"] for y in x.split("; ")]
             )
         if audio:
             tables["MediaTable"] = pd.DataFrame.from_dict(
@@ -367,36 +391,62 @@ You can also explicitly set the correct file encoding in your config."""
             )
 
         morphs["Name"] = morphs["Form"]
-        morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
-        tables["glosses"] = pd.DataFrame.from_dict(
-            [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
-        )
-        morphs["Description"] = morphs["Meaning"].apply(lambda x: ", ".join(x))
-        morphs["Parameter_ID"] = morphs["Meaning"].apply(
+        if tokenize:
+            log.info("Tokenizing...")
+            for df in [wordforms, morphs]:
+                if len(df) > 0:
+                    for orig, repl in conf.get("replace", {}).items():
+                        df["Form"] = df["Form"].replace(orig, repl, regex=True)
+                    df["Segments"] = df["Form"].apply(lambda x: tokenize(x).split(" "))
+                    bad = df[df["Segments"].apply(lambda x: "�" in x)]
+                    if len(bad) > 1:
+                        log.warning("Unsegmentable")
+                        print(bad)
+                        df["Segments"] = df["Segments"].apply(
+                            lambda x: "" if "�" in x else x
+                        )
+        if len(morph_slices) > 0:
+            morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
+            tables["glosses"] = pd.DataFrame.from_dict(
+                [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
+            )
+        morphs["Description"] = morphs["Meaning"].apply(lambda x: x.split("; "))
+        morphs["Parameter_ID"] = morphs["Description"].apply(
             lambda x: [morph_meanings[y]["ID"] for y in x]
         )
-        tables["wordforms"] = wordforms
-        morph_meanings = pd.DataFrame.from_dict(
-            [
-                x
-                for x in morph_meanings.values()
-                if x["ID"] not in list(form_meanings["ID"])
-            ]
-        )
-        tables["ParameterTable"] = pd.concat([form_meanings, morph_meanings])
-        sentence_slices["Form_Meaning"] = sentence_slices["Gloss"]
+        if len(form_meanings) > 0:
+            morph_meanings = pd.DataFrame.from_dict(
+                [
+                    x
+                    for x in morph_meanings.values()
+                    if x["ID"] not in list(form_meanings["ID"])
+                ]
+            )
+            tables["ParameterTable"] = pd.concat([form_meanings, morph_meanings])
+        else:
+            morph_meanings = pd.DataFrame.from_dict(morph_meanings.values())
+            tables["ParameterTable"] = morph_meanings
+        if len(wordforms) > 0:
+            tables["wordforms"] = wordforms
         tables["morphs"] = morphs
         tables["wordformparts"] = morph_slices
         if lexicon:
             lexicon, meanings = get_data(lex_df)
             tables["morphemes"] = morphemes
-            tables["ParameterTable"] = pd.concat([meanings, form_meanings])
+            tables["ParameterTable"] = pd.concat([meanings, tables["ParameterTable"]])
             tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
-        create_cldf(tables=tables, conf=conf, output_dir=output_dir)
+        create_cldf(
+            tables=tables, conf=conf, output_dir=output_dir, cldf_name=cldf_name
+        )
     return df
 
 
 def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
+    hum = Humidifier()
+
+    def humidify(*args, **kwargs):
+        return hum.humidify(*args, **kwargs)
+
     database_file = Path(database_file)
     conf["lexicon_mappings"]["\\" + conf["entry_marker"]] = "Headword"
     entry_marker = "\\" + conf["entry_marker"]
@@ -421,10 +471,11 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     df = pd.DataFrame.from_dict(out)
     df.rename(columns=conf["lexicon_mappings"], inplace=True)
     df.fillna("", inplace=True)
-    df["Meaning"] = df["Meaning"].apply(lambda x: x.split(sep))
     try:
         df["ID"] = df.apply(
-            lambda x: humidify(f"{x['Headword']}-{x['Meaning']}", "form", unique=True),
+            lambda x: humidify(
+                f"{x['Headword']}-{x['Meaning'].split(sep)[0]}", "form", unique=True
+            ),
             axis=1,
         )
     except KeyError as e:
