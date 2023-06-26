@@ -8,16 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * audio
-<<<<<<< HEAD
-* using [cldf-ldd](https://pypi.org/project/cldf-ldd)
-=======
 * [cldf-ldd](https://pypi.org/project/cldf-ldd)
 * better feedback
 * more speed
 * adding sources
 * ex- or including text records
 * replace characters in forms
->>>>>>> main
 
 ### Changed
 * renamed to `unboxer`
