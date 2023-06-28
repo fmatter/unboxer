@@ -85,7 +85,7 @@ def create_cldf(tables, conf, output_dir, cldf_name="cldf"):
 
     tick = time.perf_counter()
     log.info("Validating...")
-    # ds.validate(log=log)
+    ds.validate(log=log)
     tock = time.perf_counter()
     log.info(f"Validated in {tock - tick:0.4f} seconds")
 

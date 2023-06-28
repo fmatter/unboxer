@@ -8,11 +8,12 @@ import pandas as pd
 from humidifier import Humidifier
 from humidifier import get_values
 from humidifier import humidify
-from morphinder import Morphinder
+from morphinder import Morphinder, identify_complex_stem_position
 from tqdm import tqdm
 from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
 from unboxer.cldf import get_data
+from itertools import combinations
 
 
 handler = colorlog.StreamHandler(None)
@@ -105,8 +106,30 @@ def extract_morphs(lexicon, sep):
     return pd.DataFrame.from_dict(morphemes), pd.DataFrame.from_dict(morphs)
 
 
+def tuplify(x):
+    if isinstance(x, list):
+        return tuple(x)
+    elif not isinstance(x, tuple):
+        return tuple([x])
+    return x
+
+
+def listify(x):
+    if isinstance(x, tuple):
+        return list(x)
+    elif not isinstance(x, list):
+        return [x]
+    return x
+
+
 def build_slices(
-    df, morphinder=None, infl_info=None, obj_key="Analyzed_Word", gloss_key="Gloss"
+    df,
+    morphinder=None,
+    obj_key="Analyzed_Word",
+    gloss_key="Gloss",
+    infl_cats=None,
+    infl_vals=None,
+    infl_morphemes=None,
 ):
     df = df.copy()
     for c in [obj_key, gloss_key]:
@@ -117,6 +140,17 @@ def build_slices(
     w_slices = []
     s_slices = []
     inflections = []
+    infl_tuples = {}
+    wordformstems = []
+    infl_morphemes = infl_morphemes or {}
+    print(infl_morphemes)
+    print(infl_vals)
+    print(infl_cats)
+    for k, v in infl_morphemes.items():
+        new_k = tuplify(k)
+        new_v = listify(v)
+        infl_tuples[new_k] = new_v
+        infl_morphemes[k] = new_v
     w_meanings = {}
     found_stems = {}
     for sentence in tqdm(df.to_dict("records"), desc="Building slices"):
@@ -142,6 +176,7 @@ def build_slices(
                         "Morpho_Segments": w_obj.split("-"),
                     }
                 if morphinder:
+                    infl_hits = {}
                     for m_idx, (morph_obj, morph_gloss) in enumerate(
                         zip(obj.split("INTERN"), gloss.split("INTERN"))
                     ):
@@ -181,17 +216,76 @@ def build_slices(
                                     "Index": m_idx,
                                 }
                             )
-                        for infl_value in infl_info["gloss_values"].get(
-                            morph_gloss, []
-                        ):
-                            inflections.append(
-                                {
-                                    "ID": humidify(f"{w_id}-{m_id}-{infl_value}"),
-                                    "Wordformpart_ID": [slice_id],
-                                    "Value_ID": infl_value,
-                                    # "Stem_ID": "xxx",
-                                }
-                            )
+                        if m_id in infl_morphemes:
+                            infl_hits[m_id] = (morph_obj, slice_id)
+                        # for infl_value in infl_info["gloss_values"].get(
+                        #     morph_gloss, []
+                        # ):
+                    if len(infl_hits) > 1:
+                        wf_inflections = []
+                        stem_parts = obj.split("INTERN")
+                        stem_glosses = gloss.split("INTERN")
+                        i = len(infl_hits)
+                        while i > 0:
+                            cands = list(combinations(infl_hits.keys(), i))
+                            for cand in cands:
+                                if cand in infl_tuples:
+                                    cand = tuple(cand)
+                                    for m_id in cand:
+                                        m_form, slice_id = infl_hits[m_id]
+                                        for val in infl_tuples[cand]:
+                                            # print(
+                                            #     "adding value",
+                                            #     val,
+                                            #     "for morph",
+                                            #     m_id,
+                                            #     "in wordform",
+                                            #     w_id,
+                                            #     "for part",
+                                            #     slice_id,
+                                            #     "(index",
+                                            #     m_idx,
+                                            #     ")",
+                                            # )
+                                            wf_inflections.append(
+                                                {
+                                                    "ID": humidify(
+                                                        f"{w_id}-{m_id}-{val}"
+                                                    ),
+                                                    "Wordformpart_ID": [slice_id],
+                                                    "Value_ID": val,
+                                                }
+                                            )
+                                    if m_form in stem_parts:
+                                        del stem_glosses[stem_parts.index(m_form)]
+                                        stem_parts.remove(m_form)
+                                    else:
+                                        print(m_form)
+                                        print(stem_parts)
+                                        exit()
+                            i -= 1
+                        stem_form = "".join(stem_parts)
+                        stem_gloss = "".join(stem_glosses)
+                        stem_id = humidify(f"{stem_form}-{stem_gloss}")
+                        wordformstems.append(
+                            {
+                                "ID": f"{stem_id}{w_id}",
+                                "Wordform_ID": w_id,
+                                "Stem_ID": stem_id,
+                                "Index": identify_complex_stem_position(
+                                    obj.replace("INTERN", ""), stem_form
+                                ),
+                            }
+                        )
+                        if stem_id not in found_stems:
+                            found_stems[stem_id] = {
+                                "ID": stem_id,
+                                "Name": stem_form,
+                                "Meaning": stem_gloss,
+                            }
+                        for infl in wf_inflections:
+                            infl["Stem_ID"] = stem_id
+                            inflections.append(infl)
             s_slices.append(
                 {
                     "ID": f"{sentence['ID']}-{s_idx}",
@@ -214,6 +308,8 @@ def build_slices(
         pd.DataFrame.from_dict(s_slices),
         w_slices,
         pd.DataFrame.from_dict(inflections),
+        pd.DataFrame.from_dict(found_stems.values()),
+        pd.DataFrame.from_dict(wordformstems),
     )
 
 
@@ -242,6 +338,7 @@ def extract_corpus(
     if not isinstance(filenames, list):
         filenames = [filenames]
     out = []
+    inflection = inflection or {}
     for filename in filenames:
         database_file = Path(filename)
         record_marker = "\\" + conf["record_marker"]
@@ -299,7 +396,19 @@ def extract_corpus(
         rec_list = list(df["ID"]) - exclude
     else:
         rec_list = list(df["ID"])
+    # for xx in list(df["ID"]):
+    #     if xx not in rec_list:
+    #         # print(xx, "is not in", "|".join(rec_list), "\n")
+    #     else:
+    #         print("xxxx")
+    #         exit()
+    print(df)
+    print(len(rec_list))
+    if df.iloc[0]["ID"] != rec_list[0]:
+        print(df.iloc[0]["ID"])
+        print(rec_list[0])
     df = df[df["ID"].isin(rec_list)]
+    print(df)
     if lexicon:
         lex_df = extract_lexicon(lexicon, conf=conf)
         morphemes, morphs = extract_morphs(lex_df, sep)
@@ -324,15 +433,32 @@ def extract_corpus(
                     }
         morphs = pd.DataFrame.from_dict(morphs.values())
         morphinder = Morphinder(morphs, complain=complain)
-    wordforms, form_meanings, sentence_slices, morph_slices = build_slices(
-        df, morphinder
-    )
+    (
+        wordforms,
+        form_meanings,
+        sentence_slices,
+        morph_slices,
+        inflections,
+        stems,
+        wordformstems,
+    ) = build_slices(df, morphinder, **inflection)
     print(inflections)
+    print(stems)
     morph_meanings = {}
+    stem_meanings = {}
     for meanings in tqdm(morphs["Meaning"], desc="Morphs"):
         for meaning in meanings.split("; "):
             morph_meanings.setdefault(
                 meaning, {"ID": humidify(meaning, key="meanings"), "Name": meaning}
+            )
+    if len(stems) > 0:
+        for stem_gloss in tqdm(stems["Meaning"], desc="Stems"):
+            stem_meanings.setdefault(
+                stem_gloss,
+                {
+                    "ID": humidify(stem_gloss, key="meanings"),
+                    "Name": stem_gloss,
+                },
             )
     for col in tqdm(df.columns, desc="Columns"):
         if col in conf["aligned_fields"]:
@@ -368,16 +494,18 @@ def extract_corpus(
         tables = {"ExampleTable": df}
         tables["exampleparts"] = sentence_slices
 
-        if infl_file.is_file():
-            tables["inflections"] = inflections
-            tables["inflectionalvalues"] = infl_values
-            tables["inflectionalcategories"] = infl_categories
         if lexicon:
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
             morphemes["Parameter_ID"] = morphemes["Meaning"].apply(
                 lambda x: [morph_meanings[y]["ID"] for y in x.split("; ")]
             )
+        if inflection:
+            print(stems)
+            stems["Parameter_ID"] = stems["Meaning"].apply(
+                lambda x: [stem_meanings[x]["ID"]]
+            )
+
         if audio:
             tables["MediaTable"] = pd.DataFrame.from_dict(
                 [
@@ -422,7 +550,16 @@ def extract_corpus(
                     if x["ID"] not in list(form_meanings["ID"])
                 ]
             )
-            tables["ParameterTable"] = pd.concat([form_meanings, morph_meanings])
+            stem_meanings = pd.DataFrame.from_dict(
+                [
+                    x
+                    for x in stem_meanings.values()
+                    if x["ID"] not in list(form_meanings["ID"])
+                ]
+            )
+            tables["ParameterTable"] = pd.concat(
+                [form_meanings, morph_meanings, stem_meanings]
+            )
         else:
             morph_meanings = pd.DataFrame.from_dict(morph_meanings.values())
             tables["ParameterTable"] = morph_meanings
@@ -430,6 +567,15 @@ def extract_corpus(
             tables["wordforms"] = wordforms
         tables["morphs"] = morphs
         tables["wordformparts"] = morph_slices
+        if len(stems) > 0:
+            stems["Language_ID"] = conf.get("Language_ID", "undefined")
+            stems["Lexeme_ID"] = stems["ID"]
+            tables["stems"] = stems
+            tables["lexemes"] = stems
+            tables["wordformstems"] = wordformstems
+            tables["inflections"] = inflections
+            tables["inflectionalcategories"] = inflection["infl_cats"]
+            tables["inflectionalvalues"] = inflection["infl_vals"]
         if lexicon:
             lexicon, meanings = get_data(lex_df)
             tables["morphemes"] = morphemes

@@ -7,7 +7,7 @@ from unboxer import extract_corpus
 from unboxer import extract_lexicon
 from unboxer.helpers import load_config
 from unboxer.helpers import load_default_config
-
+from writio import load
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +55,14 @@ class ConvertCommand(click.Command):
                     show_default=True,
                     help="A directory containing your audio files.",
                 ),
+                click.core.Option(
+                    ("-i", "--inflection", "inflection"),
+                    type=click.Path(exists=True, path_type=Path),
+                    default=None,
+                    show_default=True,
+                    nargs=3,
+                    help="1. A CSV table of inflection categories.\n2. A CSV table of inflection values.\n3. A .yaml file with a dict mapping morph IDs to inflectional values",
+                ),
             ]
         )
 
@@ -90,7 +98,7 @@ def lexicon(filename, data_format, config_file, cldf, output_dir, audio):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def corpus(filename, config_file, cldf, data_format, **kwargs):
+def corpus(filename, config_file, cldf, data_format, inflection, **kwargs):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -100,7 +108,12 @@ def corpus(filename, config_file, cldf, data_format, **kwargs):
             "There is no Language_ID specified in the configuration, please enter manually",
             type=str,
         )
-    extract_corpus(filename, conf=conf, cldf=cldf, **kwargs)
+    if inflection:
+        infl_dict = {
+            k: load(x, index_col="ID")
+            for k, x in zip(["infl_cats", "infl_vals", "infl_morphemes"], inflection)
+        }
+    extract_corpus(filename, conf=conf, cldf=cldf, inflection=infl_dict, **kwargs)
 
 
 if __name__ == "__main__":
