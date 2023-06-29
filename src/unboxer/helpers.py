@@ -24,6 +24,9 @@ def markerize(config):
         if mapping_str in config:
             for marker in list(config[mapping_str].keys()):
                 config[mapping_str]["\\" + marker] = config[mapping_str].pop(marker)
+    for single in ["parsing_surface", "parsing_underlying"]:
+        if single in config:
+            config[single] = "\\" + config[single]
     return config
 
 
