@@ -191,6 +191,7 @@ def build_slices(df, morphinder=None, obj_key="Analyzed_Word", gloss_key="Gloss"
     if not morphinder:
         w_slices = None
     else:
+        log.warning(morphinder.failed_cache)
         w_slices = pd.DataFrame.from_dict(w_slices)
     return (
         pd.DataFrame.from_dict(wfs.values()),
@@ -213,6 +214,7 @@ def extract_corpus(
     exclude=None,
     include="all",
     cldf_name="cldf",
+    parsing_db=None,
 ):
     """Extract text records from a corpus.
 
@@ -275,15 +277,8 @@ def extract_corpus(
     else:
         df["ID"] = df.index
 
-    if include != "all":
-        rec_list = include
-    elif exclude:
-        rec_list = list(df["ID"]) - exclude
-    else:
-        rec_list = list(df["ID"])
-    df = df[df["ID"].isin(rec_list)]
     if lexicon:
-        lex_df = extract_lexicon(lexicon, conf=conf)
+        lex_df = extract_lexicon(lexicon, parsing_db=parsing_db, conf=conf)
         morphemes, morphs = extract_morphs(lex_df, sep)
         morphinder = Morphinder(morphs, complain=complain)
     else:
@@ -315,6 +310,14 @@ def extract_corpus(
             morph_meanings.setdefault(
                 meaning, {"ID": humidify(meaning, key="meanings"), "Name": meaning}
             )
+    if include != "all":
+        rec_list = include
+    elif exclude:
+        rec_list = list(df["ID"]) - exclude
+    else:
+        rec_list = list(df["ID"])
+    df = df[df["ID"].isin(rec_list)]
+    sentence_slices = sentence_slices[sentence_slices["Example_ID"].isin(rec_list)]
     for col in tqdm(df.columns, desc="Columns"):
         if col in conf["aligned_fields"]:
             df[col] = df[col].apply(_remove_spaces)
@@ -417,7 +420,7 @@ def extract_corpus(
     return df
 
 
-def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
+def extract_lexicon(database_file, conf, parsing_db=None,output_dir=".", cldf=False):
     hum = Humidifier()
 
     def humidify(*args, **kwargs):
@@ -428,13 +431,28 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     entry_marker = "\\" + conf["entry_marker"]
     with open(database_file, "r", encoding=conf["encoding"]) as f:
         content = f.read()
+    sep = conf["cell_separator"]
+    lookup_dict = {}
+    if parsing_db:
+        with open(parsing_db, "r", encoding=conf["encoding"]) as f:
+            parsing = f.read()
+        parses = parsing.split("\n\n")
+        for parse in parses[1::]:
+            res = _get_fields(
+                parse, None, multiple=[], sep=sep
+            )
+            if res:
+                val = res[conf["parsing_underlying"]]
+                if " " not in val:
+                    lookup_dict.setdefault(val, [])
+                    lookup_dict[val].append(res[conf["parsing_surface"]])
+
     if entry_marker not in content:
         raise ValueError(
             f"entry_marker is defined as '{entry_marker}', which is not found in the database."
         )
     records = content.split(entry_marker)
     out = []
-    sep = conf["cell_separator"]
     for record in records[1::]:
         res = _get_fields(
             entry_marker + record, entry_marker, multiple=["\a", "\\glo"], sep=sep
@@ -447,6 +465,16 @@ def extract_lexicon(database_file, conf, output_dir=".", cldf=False):
     df = pd.DataFrame.from_dict(out)
     df.rename(columns=conf["lexicon_mappings"], inplace=True)
     df.fillna("", inplace=True)
+    if "Variants" not in df.columns:
+        df["Variants"] = ""
+    df["Variants"] = df["Variants"].apply(lambda x: x.split(sep))
+    def insert_variants(rec):
+        if rec["Headword"] in lookup_dict:
+            for var in lookup_dict[rec["Headword"]]:
+                rec["Variants"].append(var)
+        return rec
+    df = df.apply(insert_variants, axis=1)
+    df["Variants"] = df["Variants"].apply(lambda x: sep.join([y for y in x if y]))
     try:
         df["ID"] = df.apply(
             lambda x: humidify(
