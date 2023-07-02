@@ -28,7 +28,7 @@ log.addHandler(handler)
 
 __author__ = "Florian Matter"
 __email__ = "fmatter@mailbox.org"
-__version__ = "0.0.2"
+__version__ = "0.0.3.dev"
 
 
 def _remove_spaces(text):
