@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * adding sources
 * ex- or including text records
 * replace characters in forms
+* inflection
 
 ### Changed
 * renamed to `unboxer`
