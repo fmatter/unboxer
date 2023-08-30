@@ -125,7 +125,7 @@ def get_lg(lg_id):
     }
 
 
-def get_data(lexicon, drop_variants=False, sep="; "):
+def get_lexical_data(lexicon, drop_variants=False, sep="; "):
     lexicon["Form"] = lexicon["Headword"]
     # lexicon["Meaning"] = lexicon["Meaning"].apply(lambda x: x.split(sep))
     meanings = list(_extract_meanings(list(lexicon["Meaning"])))
@@ -147,7 +147,7 @@ def get_data(lexicon, drop_variants=False, sep="; "):
 
 
 def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; "):
-    lexicon, meanings = get_data(lexicon, sep=sep)
+    lexicon, meanings = get_lexical_data(lexicon, sep=sep)
     spec = CLDFSpec(dir=output_dir / "cldf", module="Wordlist")
     with CLDFWriter(spec) as writer:
         writer.cldf.add_component("ParameterTable")

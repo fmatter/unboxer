@@ -12,7 +12,7 @@ from morphinder import Morphinder, identify_complex_stem_position
 from tqdm import tqdm
 from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
-from unboxer.cldf import get_data
+from unboxer.cldf import get_lexical_data
 from itertools import combinations
 
 
@@ -595,7 +595,7 @@ def extract_corpus(
             tables["inflectionalcategories"] = inflection["infl_cats"]
             tables["inflectionalvalues"] = inflection["infl_vals"]
         if lexicon:
-            lexicon, meanings = get_data(lex_df)
+            lexicon, meanings = get_lexical_data(lex_df)
             tables["morphemes"] = morphemes
             tables["ParameterTable"] = pd.concat([meanings, tables["ParameterTable"]])
             tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
