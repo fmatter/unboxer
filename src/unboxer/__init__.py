@@ -143,9 +143,6 @@ def build_slices(
     infl_tuples = {}
     wordformstems = []
     infl_morphemes = infl_morphemes or {}
-    print(infl_morphemes)
-    print(infl_vals)
-    print(infl_cats)
     for k, v in infl_morphemes.items():
         new_k = tuplify(k)
         new_v = listify(v)
@@ -396,8 +393,8 @@ def extract_corpus(
     if not df[record_marker].is_unique:
         if complain:
             log.warning("Found duplicate IDs, will only keep first of each:")
-        dupes = df[df.duplicated(record_marker)]
-        print(dupes)
+            dupes = df[df.duplicated(record_marker)]
+            print(dupes)
         df.drop_duplicates(record_marker, inplace=True)
     df.rename(columns=conf["interlinear_mappings"], inplace=True)
     if "Analyzed_Word" not in df.columns:
@@ -518,7 +515,6 @@ def extract_corpus(
                 lambda x: [morph_meanings[y]["ID"] for y in x.split("; ")]
             )
         if inflection:
-            print(stems)
             stems["Parameter_ID"] = stems["Meaning"].apply(
                 lambda x: [stem_meanings[x]["ID"]]
             )
