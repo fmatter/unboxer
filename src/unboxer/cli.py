@@ -3,11 +3,12 @@ import logging
 import sys
 from pathlib import Path
 import click
+from writio import load
 from unboxer import extract_corpus
 from unboxer import extract_lexicon
 from unboxer.helpers import load_config
 from unboxer.helpers import load_default_config
-from writio import load
+
 
 log = logging.getLogger(__name__)
 

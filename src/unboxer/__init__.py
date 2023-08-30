@@ -2,18 +2,19 @@
 import logging
 import re
 import sys
+from itertools import combinations
 from pathlib import Path
 import colorlog
 import pandas as pd
 from humidifier import Humidifier
 from humidifier import get_values
 from humidifier import humidify
-from morphinder import Morphinder, identify_complex_stem_position
+from morphinder import Morphinder
+from morphinder import identify_complex_stem_position
 from tqdm import tqdm
 from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
 from unboxer.cldf import get_lexical_data
-from itertools import combinations
 
 
 handler = colorlog.StreamHandler(None)
@@ -320,7 +321,9 @@ def build_slices(
         w_slices = None
     else:
         if morphinder.failed_cache:
-            log.warning(morphinder.failed_cache)
+            log.warning("Could not find lexicon entries for the following morphs:")
+            for a, b in morphinder.failed_cache:
+                log.warning(f"{a} ‘{b}’")
         w_slices = pd.DataFrame.from_dict(w_slices)
     return (
         pd.DataFrame.from_dict(wfs.values()),
@@ -414,7 +417,9 @@ def extract_corpus(
         df["ID"] = df.index
 
     if lexicon:
-        lex_df = extract_lexicon(lexicon, parsing_db=parsing_db, conf=conf)
+        lex_df = extract_lexicon(
+            lexicon, parsing_db=parsing_db, conf=conf, output_dir=output_dir
+        )
         morphemes, morphs = extract_morphs(lex_df, sep)
         morphinder = Morphinder(morphs, complain=complain)
     else:
@@ -605,7 +610,7 @@ def extract_corpus(
 
 
 def extract_lexicon(
-    database_file, conf, parsing_db=None, output_dir=".", cldf=False, audio=None
+    database_file, conf, parsing_db=None, output_dir=None, cldf=False, audio=None
 ):
     hum = Humidifier()
 

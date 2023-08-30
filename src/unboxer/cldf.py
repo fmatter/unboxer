@@ -8,8 +8,9 @@ from cldfbench import CLDFSpec
 from cldfbench.cldf import CLDFWriter
 from pycldf.util import metadata2markdown
 from tqdm import tqdm
-from unboxer.helpers import _slugify
 from writio import load
+from unboxer.helpers import _slugify
+
 
 log = logging.getLogger(__name__)
 
@@ -109,9 +110,7 @@ def _replace_meanings(label, meaning_dict):
 def get_lg(lg_id, languages=None):
     try:
         import pyglottolog  # pylint: disable=import-outside-toplevel
-        from cldfbench.catalogs import (
-            Glottolog,
-        )  # pylint: disable=import-outside-toplevel
+        from cldfbench.catalogs import Glottolog  # pylint: disable=import-outside-toplevel
     except ImportError:
         if languages is not None:
             lgs = load(languages, mode="csv2dict")
