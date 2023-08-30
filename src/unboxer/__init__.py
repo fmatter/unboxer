@@ -598,7 +598,9 @@ def extract_corpus(
     return df
 
 
-def extract_lexicon(database_file, conf, parsing_db=None, output_dir=".", cldf=False):
+def extract_lexicon(
+    database_file, conf, parsing_db=None, output_dir=".", cldf=False, audio=None
+):
     hum = Humidifier()
 
     def humidify(*args, **kwargs):
@@ -671,5 +673,5 @@ def extract_lexicon(database_file, conf, parsing_db=None, output_dir=".", cldf=F
         )
 
     if cldf:
-        create_wordlist_cldf(df, conf=conf, output_dir=output_dir)
+        create_wordlist_cldf(df, conf=conf, output_dir=output_dir, audio=audio)
     return df

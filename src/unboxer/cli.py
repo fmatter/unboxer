@@ -82,7 +82,7 @@ def lexicon(filename, data_format, config_file, cldf, output_dir, audio):
             "There is no Language_ID specified in the configuration, please enter manually",
             type=str,
         )
-    extract_lexicon(filename, output_dir=output_dir, conf=conf, cldf=cldf)
+    extract_lexicon(filename, output_dir=output_dir, conf=conf, cldf=cldf, audio=audio)
 
 
 @click.argument(

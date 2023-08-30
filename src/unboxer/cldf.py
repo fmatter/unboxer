@@ -146,7 +146,7 @@ def get_lexical_data(lexicon, drop_variants=False, sep="; "):
     return lexicon, meanings
 
 
-def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; "):
+def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; ", audio=None):
     lexicon, meanings = get_lexical_data(lexicon, sep=sep)
     spec = CLDFSpec(dir=output_dir / "cldf", module="Wordlist")
     with CLDFWriter(spec) as writer:
@@ -169,7 +169,8 @@ def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; "):
                 "valueUrl": conf["Language_ID"],
             },
         )
-
+        if audio:
+            pass  # todo: implement
         writer.write()
 
         return writer.cldf
