@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+* no inflection **required**
+* bug with lexicon-less extraction
+
 ## [0.0.2] - 2023-07-02
 
 ### Added

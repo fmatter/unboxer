@@ -108,11 +108,10 @@ def corpus(filename, config_file, cldf, data_format, inflection, **kwargs):
             "There is no Language_ID specified in the configuration, please enter manually",
             type=str,
         )
+    infl_dict = {}
     if inflection:
-        infl_dict = {
-            k: load(x, index_col="ID")
-            for k, x in zip(["infl_cats", "infl_vals", "infl_morphemes"], inflection)
-        }
+        for k, x in zip(["infl_cats", "infl_vals", "infl_morphemes"], inflection):
+            infl_dict[k] = load(x, index_col="ID")
     extract_corpus(filename, conf=conf, cldf=cldf, inflection=infl_dict, **kwargs)
 
 

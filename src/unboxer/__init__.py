@@ -437,7 +437,7 @@ def extract_corpus(
                     morphs[morph_id] = {
                         "ID": morph_id,
                         "Form": obj,
-                        "Meaning": [gloss.strip("-").strip("=")],
+                        "Meaning": gloss.strip("-").strip("="),
                     }
         morphs = pd.DataFrame.from_dict(morphs.values())
         morphinder = Morphinder(morphs, complain=complain)
@@ -511,7 +511,6 @@ def extract_corpus(
     if cldf:
         tables = {"ExampleTable": df}
         tables["exampleparts"] = sentence_slices
-
         if lexicon:
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
@@ -556,9 +555,9 @@ def extract_corpus(
             tables["glosses"] = pd.DataFrame.from_dict(
                 [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
             )
-        morphs["Description"] = morphs["Meaning"].apply(lambda x: x.split("; "))
+        morphs["Description"] = morphs["Meaning"]
         morphs["Parameter_ID"] = morphs["Description"].apply(
-            lambda x: [morph_meanings[y]["ID"] for y in x]
+            lambda x: [morph_meanings[y]["ID"] for y in x.split("; ")]
         )
         if len(form_meanings) > 0:
             morph_meanings = pd.DataFrame.from_dict(
