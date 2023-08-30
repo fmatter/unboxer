@@ -219,9 +219,6 @@ def build_slices(
                             infl_hits[m_id] = (morph_obj, slice_id)
                         else:
                             stem_mids.append(m_id)
-                        # for infl_value in infl_info["gloss_values"].get(
-                        #     morph_gloss, []
-                        # ):
                     if len(infl_hits) > 1:
                         wf_inflections = []
                         stem_objs = obj.split("INTERN")
