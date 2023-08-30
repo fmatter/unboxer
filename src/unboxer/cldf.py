@@ -9,12 +9,12 @@ from cldfbench.cldf import CLDFWriter
 from pycldf.util import metadata2markdown
 from tqdm import tqdm
 from unboxer.helpers import _slugify
-
+from writio import load
 
 log = logging.getLogger(__name__)
 
 
-def create_dataset(tables, conf, output_dir, cldf_name="cldf"):
+def create_dataset(tables, conf, output_dir, cldf_name="cldf", languages=None):
     table_map = {
         default: default
         for default in ["ExampleTable", "ParameterTable", "FormTable", "MediaTable"]
@@ -37,7 +37,9 @@ def create_dataset(tables, conf, output_dir, cldf_name="cldf"):
             writer.objects["LanguageTable"].append(conf["language"])
         else:
             log.info(f"Retrieving data for language {conf['Language_ID']}")
-            writer.objects["LanguageTable"].append(get_lg(conf["Language_ID"]))
+            writer.objects["LanguageTable"].append(
+                get_lg(conf["Language_ID"], languages=languages)
+            )
         for table, df in tqdm(tables.items(), desc="CLDF tables"):
             if len(df) == 0:
                 log.warning(f"{table} is empty")
@@ -71,13 +73,13 @@ def create_dataset(tables, conf, output_dir, cldf_name="cldf"):
         return writer.cldf
 
 
-def create_cldf(tables, conf, output_dir, cldf_name="cldf"):
+def create_cldf(tables, conf, output_dir, cldf_name="cldf", **kwargs):
     if "Language_ID" not in conf:
         raise TypeError("Please specify a Language_ID in your configuration")
 
     tick = time.perf_counter()
     log.info("Creating CLDF dataset")
-    ds = create_dataset(tables, conf, output_dir, cldf_name=cldf_name)
+    ds = create_dataset(tables, conf, output_dir, cldf_name=cldf_name, **kwargs)
     tock = time.perf_counter()
     log.info(
         f"Created dataset {ds.directory.resolve()}/{ds.filename} in {tock - tick:0.4f} seconds"
@@ -104,17 +106,26 @@ def _replace_meanings(label, meaning_dict):
     return [meaning_dict[x] for x in label.split("; ")]
 
 
-def get_lg(lg_id):
+def get_lg(lg_id, languages=None):
     try:
         import pyglottolog  # pylint: disable=import-outside-toplevel
         from cldfbench.catalogs import (
             Glottolog,
         )  # pylint: disable=import-outside-toplevel
     except ImportError:
-        log.error(
-            "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can add a languages.csv file."
-        )
-        sys.exit()
+        if languages is not None:
+            lgs = load(languages, mode="csv2dict")
+            if lg_id not in lgs:
+                log.error(
+                    f"The specified language ID [{lg_id}] was not found in the file {languages}"
+                )
+                sys.exit()
+            return lgs[lg_id]
+        else:
+            log.error(
+                "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can specify a languages.csv file."
+            )
+            sys.exit()
     glottolog = pyglottolog.Glottolog(Glottolog.from_config().repo.working_dir)
     languoid = glottolog.languoid(lg_id)
     return {
@@ -146,8 +157,10 @@ def get_lexical_data(lexicon, drop_variants=False, sep="; "):
     return lexicon, meanings
 
 
-def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; ", audio=None):
-    lexicon, meanings = get_lexical_data(lexicon, sep=sep)
+def create_wordlist_cldf(
+    lexicon, conf, output_dir, languages=None, audio=None, **kwargs
+):
+    lexicon, meanings = get_lexical_data(lexicon, **kwargs)
     spec = CLDFSpec(dir=output_dir / "cldf", module="Wordlist")
     with CLDFWriter(spec) as writer:
         writer.cldf.add_component("ParameterTable")
@@ -156,7 +169,9 @@ def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; ", audio=None):
         for meaning in meanings.to_dict("records"):
             writer.objects["ParameterTable"].append(meaning)
         writer.cldf.add_component("LanguageTable")
-        writer.objects["LanguageTable"].append(get_lg(conf["Language_ID"]))
+        writer.objects["LanguageTable"].append(
+            get_lg(conf["Language_ID"], languages=languages)
+        )
         writer.cldf.remove_columns(
             "FormTable", "Language_ID"
         )  # turn Language_ID into virtual columns
@@ -172,10 +187,6 @@ def _create_wordlist_cldf(lexicon, conf, output_dir, sep="; ", audio=None):
         if audio:
             pass  # todo: implement
         writer.write()
-
-        return writer.cldf
-
-
-def create_wordlist_cldf(lexicon, conf, output_dir, sep="; "):
-    ds = _create_wordlist_cldf(lexicon, conf, output_dir, sep)
+        ds = writer.cldf
     ds.validate(log=log)
+    return ds

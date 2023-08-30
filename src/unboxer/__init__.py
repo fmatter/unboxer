@@ -349,6 +349,7 @@ def extract_corpus(
     include="all",
     cldf_name="cldf",
     parsing_db=None,
+    languages=None,
 ):
     """Extract text records from a corpus.
 
@@ -594,7 +595,11 @@ def extract_corpus(
             tables["ParameterTable"] = pd.concat([meanings, tables["ParameterTable"]])
             tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
         create_cldf(
-            tables=tables, conf=conf, output_dir=output_dir, cldf_name=cldf_name
+            tables=tables,
+            conf=conf,
+            output_dir=output_dir,
+            cldf_name=cldf_name,
+            languages=languages,
         )
     return df
 
@@ -674,5 +679,7 @@ def extract_lexicon(
         )
 
     if cldf:
-        create_wordlist_cldf(df, conf=conf, output_dir=output_dir, audio=audio)
+        create_wordlist_cldf(
+            df, conf=conf, output_dir=output_dir, audio=audio, languages=languages
+        )
     return df

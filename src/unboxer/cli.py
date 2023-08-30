@@ -56,6 +56,13 @@ class ConvertCommand(click.Command):
                     help="A directory containing your audio files.",
                 ),
                 click.core.Option(
+                    ("-L", "--languages", "languages"),
+                    type=click.Path(exists=True, path_type=Path),
+                    default=None,
+                    show_default=True,
+                    help="A CSV file containing language data.",
+                ),
+                click.core.Option(
                     ("-i", "--inflection", "inflection"),
                     type=click.Path(exists=True, path_type=Path),
                     default=None,
@@ -72,7 +79,7 @@ class ConvertCommand(click.Command):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def lexicon(filename, data_format, config_file, cldf, output_dir, audio):
+def lexicon(filename, data_format, config_file, cldf, output_dir, audio, languages):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -82,7 +89,14 @@ def lexicon(filename, data_format, config_file, cldf, output_dir, audio):
             "There is no Language_ID specified in the configuration, please enter manually",
             type=str,
         )
-    extract_lexicon(filename, output_dir=output_dir, conf=conf, cldf=cldf, audio=audio)
+    extract_lexicon(
+        filename,
+        output_dir=output_dir,
+        conf=conf,
+        cldf=cldf,
+        audio=audio,
+        languages=languages,
+    )
 
 
 @click.argument(
@@ -98,7 +112,7 @@ def lexicon(filename, data_format, config_file, cldf, output_dir, audio):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def corpus(filename, config_file, cldf, data_format, inflection, **kwargs):
+def corpus(filename, config_file, cldf, data_format, inflection, languages, **kwargs):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -112,7 +126,14 @@ def corpus(filename, config_file, cldf, data_format, inflection, **kwargs):
     if inflection:
         for k, x in zip(["infl_cats", "infl_vals", "infl_morphemes"], inflection):
             infl_dict[k] = load(x, index_col="ID")
-    extract_corpus(filename, conf=conf, cldf=cldf, inflection=infl_dict, **kwargs)
+    extract_corpus(
+        filename,
+        conf=conf,
+        cldf=cldf,
+        inflection=infl_dict,
+        languages=languages,
+        **kwargs
+    )
 
 
 if __name__ == "__main__":
