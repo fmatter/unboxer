@@ -109,7 +109,7 @@ def extract_morphs(lexicon, sep):
 def tuplify(x):
     if isinstance(x, list):
         return tuple(x)
-    elif not isinstance(x, tuple):
+    if not isinstance(x, tuple):
         return tuple([x])
     return x
 
@@ -117,7 +117,7 @@ def tuplify(x):
 def listify(x):
     if isinstance(x, tuple):
         return list(x)
-    elif not isinstance(x, list):
+    if not isinstance(x, list):
         return [x]
     return x
 
@@ -130,7 +130,7 @@ def build_slices(
     infl_cats=None,
     infl_vals=None,
     infl_morphemes=None,
-):
+):  # pylint:ignore=too-many-arguments,too-many-locals
     df = df.copy()
     for c in [obj_key, gloss_key]:
         df[c] = df[c].apply(lambda x: re.sub(r"-\s+", "-INTERN", x))
@@ -280,7 +280,7 @@ def build_slices(
                                 "ID": stem_id,
                                 "Name": stem_form,
                                 "Meaning": stem_gloss,
-                                "Morpho_Segments": [x.strip("-") for x in stem_objs]
+                                "Morpho_Segments": [x.strip("-") for x in stem_objs],
                             }
                             # exit()
                             # print(stem_form)
@@ -598,7 +598,7 @@ def extract_corpus(
     return df
 
 
-def extract_lexicon(database_file, conf, parsing_db=None,output_dir=".", cldf=False):
+def extract_lexicon(database_file, conf, parsing_db=None, output_dir=".", cldf=False):
     hum = Humidifier()
 
     def humidify(*args, **kwargs):
@@ -616,9 +616,7 @@ def extract_lexicon(database_file, conf, parsing_db=None,output_dir=".", cldf=Fa
             parsing = f.read()
         parses = parsing.split("\n\n")
         for parse in parses[1::]:
-            res = _get_fields(
-                parse, None, multiple=[], sep=sep
-            )
+            res = _get_fields(parse, None, multiple=[], sep=sep)
             if res:
                 val = res[conf["parsing_underlying"]]
                 if " " not in val:
@@ -646,11 +644,13 @@ def extract_lexicon(database_file, conf, parsing_db=None,output_dir=".", cldf=Fa
     if "Variants" not in df.columns:
         df["Variants"] = ""
     df["Variants"] = df["Variants"].apply(lambda x: x.split(sep))
+
     def insert_variants(rec):
         if rec["Headword"] in lookup_dict:
             for var in lookup_dict[rec["Headword"]]:
                 rec["Variants"].append(var)
         return rec
+
     df = df.apply(insert_variants, axis=1)
     df["Variants"] = df["Variants"].apply(lambda x: sep.join([y for y in x if y]))
     try:
