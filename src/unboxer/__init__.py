@@ -319,7 +319,8 @@ def build_slices(
     if not morphinder:
         w_slices = None
     else:
-        log.warning(morphinder.failed_cache)
+        if morphinder.failed_cache:
+            log.warning(morphinder.failed_cache)
         w_slices = pd.DataFrame.from_dict(w_slices)
     return (
         pd.DataFrame.from_dict(wfs.values()),
