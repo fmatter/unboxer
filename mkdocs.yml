@@ -1,0 +1,4 @@
+site_name: unboxer
+theme: readthedocs
+markdown_extensions:
+    - mkdocs-click
