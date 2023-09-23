@@ -15,6 +15,11 @@ pip install unboxer
 ```
 
 ## Usage
+
+* `unbox corpus`
+* `unbox wordlist`
+* `unbox dictionary`
+
 At the moment, there is only one command: `unbox corpus`, for collections of glossed texts.
 To create a file `mytextdatabase.csv` from a toolbox file `mytextdatabase.txt`:
 

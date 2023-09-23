@@ -13,7 +13,7 @@ from morphinder import Morphinder
 from morphinder import identify_complex_stem_position
 from tqdm import tqdm
 from unboxer.cldf import create_cldf
-from unboxer.cldf import create_wordlist_cldf
+from unboxer.cldf import create_wordlist_cldf, create_dictionary_cldf
 from unboxer.cldf import get_lexical_data
 from unboxer import helpers
 
@@ -503,8 +503,8 @@ def extract_corpus(
         if lexicon:
             morphemes.to_csv((Path(output_dir) / "morphemes.csv"), index=False)
     if cldf:
-        tables = {"ExampleTable": df}
-        tables["exampleparts"] = sentence_slices
+        tables = {"examples.csv": df}
+        tables["exampleparts.csv"] = sentence_slices
         if lexicon:
             morphemes["Name"] = morphemes["Headword"]
             morphemes["Description"] = morphemes["Meaning"]
@@ -517,7 +517,7 @@ def extract_corpus(
             )
 
         if audio:
-            tables["MediaTable"] = pd.DataFrame.from_dict(
+            tables["media.to_csv"] = pd.DataFrame.from_dict(
                 [
                     {
                         "ID": f.stem,
@@ -545,7 +545,7 @@ def extract_corpus(
                         )
         if len(morph_slices) > 0:
             morph_slices["Gloss_ID"] = morph_slices["Gloss"].apply(id_glosses)
-            tables["glosses"] = pd.DataFrame.from_dict(
+            tables["glosses.csv"] = pd.DataFrame.from_dict(
                 [{"ID": v, "Name": k} for k, v in get_values("glosses").items()]
             )
         morphs["Description"] = morphs["Meaning"]
@@ -567,43 +567,52 @@ def extract_corpus(
                     if x["ID"] not in list(form_meanings["ID"])
                 ]
             )
-            tables["ParameterTable"] = pd.concat(
+            tables["parameters.csv"] = pd.concat(
                 [form_meanings, morph_meanings, stem_meanings]
             )
         else:
             morph_meanings = pd.DataFrame.from_dict(morph_meanings.values())
-            tables["ParameterTable"] = morph_meanings
+            tables["parameters.csv"] = morph_meanings
         if len(wordforms) > 0:
-            tables["wordforms"] = wordforms
-        tables["morphs"] = morphs
-        tables["wordformparts"] = morph_slices
+            tables["wordforms.csv"] = wordforms
+        tables["morphs.csv"] = morphs
+        tables["wordformparts.csv"] = morph_slices
         if len(stems) > 0:
             stems["Language_ID"] = conf.get("Language_ID", "undefined")
             stems["Lexeme_ID"] = stems["ID"]
-            tables["stems"] = stems
-            tables["lexemes"] = stems
-            tables["stemparts"] = stemparts
-            tables["wordformstems"] = wordformstems
-            tables["inflections"] = inflections
-            tables["inflectionalcategories"] = inflection["infl_cats"]
-            tables["inflectionalvalues"] = inflection["infl_vals"]
+            tables["stems.csv"] = stems
+            tables["lexemes.csv"] = stems
+            tables["stemparts.csv"] = stemparts
+            tables["wordformstems.csv"] = wordformstems
+            tables["inflections.csv"] = inflections
+            tables["inflectionalcategories.csv"] = inflection["infl_cats"]
+            tables["inflectionalvalues.csv"] = inflection["infl_vals"]
         if lexicon:
             lexicon, meanings = get_lexical_data(lex_df)
-            tables["morphemes"] = morphemes
-            tables["ParameterTable"] = pd.concat([meanings, tables["ParameterTable"]])
-            tables["ParameterTable"].drop_duplicates(subset="ID", inplace=True)
+            tables["morphemes.csv"] = morphemes
+            tables["parameters.csv"] = pd.concat([meanings, tables["parameters.csv"]])
+            tables["parameters.csv"].drop_duplicates(subset="ID", inplace=True)
+
         create_cldf(
             tables=tables,
             conf=conf,
             output_dir=output_dir,
             cldf_name=cldf_name,
             languages=languages,
+            module="corpus"
         )
     return df
 
 
 def extract_lexicon(
-    database_file, conf, parsing_db=None, output_dir=None, cldf=False, audio=None
+    database_file,
+    conf,
+    parsing_db=None,
+    output_dir=None,
+    cldf=None,
+    audio=None,
+    languages=None,
+    examples=None,
 ):
     hum = Humidifier()
 
@@ -671,13 +680,30 @@ def extract_lexicon(
         print(df)
         sys.exit()
 
+    if conf["Language_ID"]:
+        df["Language_ID"] = conf["Language_ID"]
+
+    if examples:
+        example_df = extract_corpus(examples, conf=conf)
+    else:
+        example_df = None
+
     if output_dir:
         df.to_csv(
             (Path(output_dir) / database_file.name).with_suffix(".csv"), index=False
         )
 
-    if cldf:
+    if cldf == "wordlist":
         create_wordlist_cldf(
             df, conf=conf, output_dir=output_dir, audio=audio, languages=languages
+        )
+    if cldf == "dictionary":
+        create_dictionary_cldf(
+            df,
+            conf=conf,
+            output_dir=output_dir,
+            audio=audio,
+            languages=languages,
+            examples=example_df,
         )
     return df

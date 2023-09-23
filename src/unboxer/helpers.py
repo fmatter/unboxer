@@ -14,6 +14,7 @@ def fix_glosses(rec, goal="Analyzed_Word", target="Gloss", sep="\t"):
             rec[goal] = rec[goal].strip(sep)
     return rec
 
+
 def load_yaml(path):
     with open(path, "r", encoding="utf-8") as f:
         dic = yaml.load(f, Loader=yaml.SafeLoader)

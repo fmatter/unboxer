@@ -12,3 +12,4 @@ lexicon_mappings:
   lx: Headword
   ps: Part_Of_Speech
   ge: Meaning
+  xref: Example_IDs

@@ -63,14 +63,6 @@ class ConvertCommand(click.Command):
                     show_default=True,
                     help="A CSV file containing language data.",
                 ),
-                click.core.Option(
-                    ("-i", "--inflection", "inflection"),
-                    type=click.Path(exists=True, path_type=Path),
-                    default=None,
-                    show_default=True,
-                    nargs=3,
-                    help="1. A CSV table of inflection categories.\n2. A CSV table of inflection values.\n3. A .yaml file with a dict mapping morph IDs to inflectional values",
-                ),
             ]
         )
 
@@ -80,7 +72,7 @@ class ConvertCommand(click.Command):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def lexicon(filename, data_format, config_file, cldf, output_dir, audio, languages):
+def wordlist(filename, data_format, config_file, cldf, output_dir, audio, languages):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -94,9 +86,46 @@ def lexicon(filename, data_format, config_file, cldf, output_dir, audio, languag
         filename,
         output_dir=output_dir,
         conf=conf,
-        cldf=cldf,
+        cldf="wordlist" if cldf else None,
         audio=audio,
         languages=languages,
+    )
+
+
+@click.argument(
+    "filename",
+    type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "-e",
+    "--examples",
+    "examples",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    show_default=True,
+    help="An examples (corpus) database file",
+)
+@main.command(cls=ConvertCommand)
+def dictionary(
+    filename, data_format, config_file, cldf, output_dir, audio, languages, examples
+):
+    if config_file:
+        conf = load_config(config_file, data_format)
+    else:
+        conf = load_default_config(data_format)
+    if cldf and "Language_ID" not in conf:
+        conf["Language_ID"] = click.prompt(
+            "There is no Language_ID specified in the configuration, please enter manually",
+            type=str,
+        )
+    extract_lexicon(
+        filename,
+        output_dir=output_dir,
+        conf=conf,
+        cldf="dictionary" if cldf else None,
+        audio=audio,
+        languages=languages,
+        examples=examples,
     )
 
 
@@ -111,6 +140,16 @@ def lexicon(filename, data_format, config_file, cldf, output_dir, audio, languag
     default=None,
     help="Connect corpus to a lexicon",
     type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "-i",
+    "--inflection",
+    "inflection",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    show_default=True,
+    nargs=3,
+    help="1. A CSV table of inflection categories.\n2. A CSV table of inflection values.\n3. A .yaml file with a dict mapping morph IDs to inflectional values",
 )
 @main.command(cls=ConvertCommand)
 def corpus(filename, config_file, cldf, data_format, inflection, languages, **kwargs):
