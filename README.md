@@ -14,25 +14,3 @@ Extract data from shoebox and toolbox projects to CSV files.
 ```shell
 pip install unboxer
 ```
-
-## Usage
-
-* `unbox corpus`
-* `unbox wordlist`
-* `unbox dictionary`
-
-At the moment, there is only one command: `unbox corpus`, for collections of glossed texts.
-To create a file `mytextdatabase.csv` from a toolbox file `mytextdatabase.txt`:
-
-```shell
-unbox corpus mytoolbox/mytextdatabase.txt
-```
-
-Project-specific configuration can be passed via `--conf your/config.yaml`; to see what options are available, check [the default configuration file](src/unboxer/data/interlinear_config.yaml) as well as the default configuration files for [toolbox](src/unboxer/data/toolbox.yaml) and [shoebox](src/unboxer/data/shoebox.yaml).
-
-To create a [CLDF](cldf.clld.org/) version of the corpus, add the option `--cldf`.
-For more help on how to run the command, use `unbox corpus --help`.
-
-## Problems
-1. if running `unbox` produces warnings, check your database for possible inconsistencies
-2. if that did not solve your problem, [open an issue](https://github.com/fmatter/unboxer/issues/new)
