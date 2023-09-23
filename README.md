@@ -8,6 +8,7 @@ Extract data from shoebox and toolbox projects to CSV files.
 [![Codecov](https://img.shields.io/codecov/c/github/fmatter/unboxer)](https://app.codecov.io/gh/fmatter/unboxer/)
 [![PyPI](https://img.shields.io/pypi/v/unboxer.svg)](https://pypi.org/project/unboxer)
 ![Versions](https://img.shields.io/pypi/pyversions/unboxer)
+[![Documentation Status](https://readthedocs.org/projects/unboxer/badge/?version=latest)](https://unboxer.readthedocs.io/en/latest/?badge=latest)
 
 ## Installation
 ```shell
