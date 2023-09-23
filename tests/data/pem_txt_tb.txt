@@ -9,7 +9,7 @@
 
 \tx wakü pe    ipoi       chinoro  tok nekama     neke
 \mb wakü pe    i-   poi   chinoro  tok n-   ekama neke
-\ge good  ESS   3-   from  at first 3PL 3-   say   NEG
+\ge good  ESS   3-   from  at_first 3PL 3-   say   NEG
 \ps n     postp pfx- postp adv      pro pfx- vi    ADV
 
 \otx Seré penatokón, Apaurai - tepuy medá ikowampuesakón ekaré, waki-pé i-poi chinoró to n-ekamá neké.
@@ -18,7 +18,7 @@
 \ref .002
 \tx wakauyen poi   chinoro  tok e'pötü'pö      karuari ri    pök  töukin
 \mb wakauyen poi   chinoro  tok esi -pötü -'pö karuari ri    pök  töukin
-\ge wakauyen from  at first 3PL be  -PLAC   -PST  karuari river on    one
+\ge wakauyen from  at_first 3PL be  -PLAC   -PST  karuari river on    one
 \ps n        postp adv      pro vi  -sfx    -sfx  n       n     postp adv
 
 \tx pane  winüküy yamu       tepose

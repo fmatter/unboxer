@@ -15,6 +15,7 @@ from tqdm import tqdm
 from unboxer.cldf import create_cldf
 from unboxer.cldf import create_wordlist_cldf
 from unboxer.cldf import get_lexical_data
+from unboxer import helpers
 
 
 handler = colorlog.StreamHandler(None)
@@ -74,14 +75,6 @@ def _get_fields(record, rec_marker, multiple, sep):
 def _fix_clitics(string):
     string = string.replace("=\t", "=").replace("\t=", "=")
     return string
-
-
-def _fix_glosses(rec, goal="Analyzed_Word", target="Gloss", sep="\t"):
-    if rec[goal].count(sep) != rec[target].count(sep):
-        rec[target] = rec[target].strip(sep)
-        if rec[goal].count(sep) != rec[target].count(sep):
-            rec[goal] = rec[goal].strip(sep)
-    return rec
 
 
 def extract_morphs(lexicon, sep):
@@ -481,7 +474,7 @@ def extract_corpus(
         if col in conf["aligned_fields"]:
             df[col] = df[col].apply(_remove_spaces)
     df = df[df["ID"].isin(rec_list)]
-    df = df.apply(_fix_glosses, axis=1)
+    df = df.apply(helpers.fix_glosses, axis=1)
     sentence_slices = sentence_slices[sentence_slices["Example_ID"].isin(rec_list)]
     if conf["fix_clitics"]:
         log.info("Fixing clitics")

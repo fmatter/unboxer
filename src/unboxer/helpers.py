@@ -7,6 +7,13 @@ from slugify import slugify
 DATA = files("unboxer") / "data"
 
 
+def fix_glosses(rec, goal="Analyzed_Word", target="Gloss", sep="\t"):
+    if rec[goal].count(sep) != rec[target].count(sep):
+        rec[target] = rec[target].strip(sep)
+        if rec[goal].count(sep) != rec[target].count(sep):
+            rec[goal] = rec[goal].strip(sep)
+    return rec
+
 def load_yaml(path):
     with open(path, "r", encoding="utf-8") as f:
         dic = yaml.load(f, Loader=yaml.SafeLoader)
