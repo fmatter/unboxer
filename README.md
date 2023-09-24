@@ -14,3 +14,6 @@ Extract data from shoebox and toolbox projects to CSV files.
 ```shell
 pip install unboxer
 ```
+
+## Usage
+[Documentation](https://unboxer.readthedocs.io/en/latest/)

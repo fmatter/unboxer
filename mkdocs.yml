@@ -1,5 +1,5 @@
 site_name: unboxer
-theme: readthedocs
+theme: material
 markdown_extensions:
     - mkdocs-click
 plugins:
