@@ -1,5 +1,48 @@
 site_name: unboxer
-theme: material
+theme:
+  name: material
+  features:
+  #   - announce.dismiss
+  #   - content.action.edit
+  #   - content.action.view
+  #   - content.code.annotate
+  #   - content.code.copy
+  #   # - content.code.select
+  #   # - content.tabs.link
+  #   - content.tooltips
+  #   # - header.autohide
+  #   # - navigation.expand
+  #   - navigation.footer
+  #   - navigation.indexes
+    - navigation.instant
+    # - navigation.prune
+    # - navigation.sections
+    # - navigation.tabs
+  #   # - navigation.tabs.sticky
+  #   - navigation.top
+  #   - navigation.tracking
+  #   - search.highlight
+  #   - search.share
+  #   - search.suggest
+  #   - toc.follow
+    - toc.integrate
+  palette:     
+    # Palette toggle for light mode
+    - scheme: default
+      primary: green
+      accent: orange
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: green
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+repo_url: https://github.com/fmatter/unboxer
 markdown_extensions:
     - mkdocs-click
 plugins:

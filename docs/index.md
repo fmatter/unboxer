@@ -1,4 +1,17 @@
-# unboxer
+# Getting started
+
+The unboxer is a tool to turn [toolbox](https://software.sil.org/toolbox/) and [shoebox](https://software.sil.org/shoebox/) databases into CSV files.
+Its primary focus is the creation of [CLDF](https://cldf.clld.org/) datasets, but the extracted files can be used in other ways, too.
+
+## Installation
+
+Install the unboxer python library:
+
+```shell
+pip install unboxer
+```
+
+## Command line usage
 
 There are three CLI commands available, called with `unboxer COMMAND`:
 
