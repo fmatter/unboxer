@@ -1,0 +1,4 @@
+.
+mkdocs-click
+mkdocstrings
+mkdocs-material
