@@ -11,9 +11,9 @@ Install the unboxer python library:
 pip install unboxer
 ```
 
-## Command line usage
+## Usage
 
-There are three CLI commands available, called with `unboxer COMMAND`:
+There are three CLI commands available, called with `unbox <COMMAND>`:
 
 * [corpus](#corpus)
 * [dictionary](#dictionary)
@@ -22,16 +22,20 @@ There are three CLI commands available, called with `unboxer COMMAND`:
 ::: mkdocs-click
     :module: unboxer.cli
     :command: corpus
+    :depth: 2
 
 
 ::: mkdocs-click
     :module: unboxer.cli
     :command: dictionary
+    :depth: 2
 
 ::: mkdocs-click
     :module: unboxer.cli
     :command: wordlist
+    :depth: 2
 
+## Configuration
 Project-specific configuration can be passed via `--conf your/config.yaml`; to see what options are available, check [the default configuration file](src/unboxer/data/interlinear_config.yaml) as well as the default configuration files for [toolbox](src/unboxer/data/toolbox.yaml) and [shoebox](src/unboxer/data/shoebox.yaml).
 
 ## Problems

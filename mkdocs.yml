@@ -1,6 +1,7 @@
 site_name: unboxer
 theme:
   name: material
+  logo: assets/icon.svg
   features:
   #   - announce.dismiss
   #   - content.action.edit
@@ -17,8 +18,8 @@ theme:
     - navigation.instant
     # - navigation.prune
     # - navigation.sections
-    # - navigation.tabs
-  #   # - navigation.tabs.sticky
+    - navigation.tabs
+    - navigation.tabs.sticky
   #   - navigation.top
   #   - navigation.tracking
   #   - search.highlight
@@ -26,10 +27,11 @@ theme:
   #   - search.suggest
   #   - toc.follow
     - toc.integrate
+    - content.code.copy
   palette:     
     # Palette toggle for light mode
     - scheme: default
-      primary: green
+      primary: purple
       accent: orange
       toggle:
         icon: material/brightness-7 
@@ -37,7 +39,7 @@ theme:
 
     # Palette toggle for dark mode
     - scheme: slate
-      primary: green
+      primary: purple
       accent: orange
       toggle:
         icon: material/brightness-4
