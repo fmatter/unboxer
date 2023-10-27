@@ -1,15 +1,19 @@
-encoding: cp1252 # The file encoding.
-record_marker: ref # The field holding text record identifiers. Note the absence of \ !
-interlinear_mappings: # The fields specified here will be renamed accordingly. Note the absence of \ !
-  t: Primary_Text
-  m: Analyzed_Word
-  g: Gloss
-  p: Part_Of_Speech
-  f: Translated_Text
-  c: Comment
-entry_marker: lx
-lexicon_mappings:
-  lx: Headword
-  ps: Part_Of_Speech
-  ge: Meaning
-  xref: Example_IDs
+# This is the default configuration for shoebox projects.
+encoding: cp1252 # File encoding: The default is the [most frequent single-byte character encoding](https://en.wikipedia.org/wiki/Windows-1252).
+# Other values I've had to use: [`cp1256`](https://en.wikipedia.org/wiki/Windows-1256),
+#[`iso8859_2`](https://fr.wikipedia.org/wiki/ISO/CEI_8859-2),
+#[`latin_1`](https://en.wikipedia.org/wiki/ISO/IEC_8859-1).
+record_marker: ref # Text record marker: The field holding text record identifiers.
+interlinear_mappings: # Mapping interlinear fields to columns: The fields listed here will be renamed accordingly.
+  t: Primary_Text # Unsegmented object line: The unsegmented first line of the record.
+  m: Analyzed_Word # Segmented object line: 
+  g: Gloss # Segmented gloss line: 
+  p: Part_Of_Speech # Part of speech: 
+  f: Translated_Text # Translation: 
+  c: Comment # Comment: 
+entry_marker: lx # Lexicon entry marker: The field holding lexicon entry identifiers.
+lexicon_mappings:  # Mapping lexicon fields to columns: The fields listed here will be renamed accordingly.
+  lx: Headword # Headword: 
+  ps: Part_Of_Speech # Part of speech: 
+  ge: Meaning # Meaning: 
+  xref: Example_IDs # Example IDs: As [suggested by Dictionaria](https://dictionaria.clld.org/submit#toolbox1).

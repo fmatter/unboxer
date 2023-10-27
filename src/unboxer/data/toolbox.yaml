@@ -1,15 +1,18 @@
-record_marker: ref # The field holding text record identifiers. Note the absence of \ !
-encoding: utf-8 # The file encoding.
-interlinear_mappings: # The fields specified here will be renamed accordingly. Note the absence of \ !
-  tx: Primary_Text
-  mb: Analyzed_Word
-  ge: Gloss
-  ps: Part_Of_Speech
-  ft: Translated_Text
-entry_marker: lx
-lexicon_mappings:
-  lx: Headword
-  ps: Part_Of_Speech
-  ge: Meaning
-  dt: Date
-  a: Variants
+# This is the default configuration for toolbox projects.
+encoding: utf-8 # File encoding: toolbox files should be in UTF-8.
+record_marker: ref # Text record marker: The field holding text record identifiers.
+interlinear_mappings: # Mapping interlinear fields to columns: The fields listed here will be renamed accordingly.
+# Note that all field markers are represented here without the leading `\` that is used in toolbox.
+  tx: Primary_Text # Unsegmented object line: The unsegmented first line of the record.
+  mb: Analyzed_Word # Segmented object line: 
+  ge: Gloss # Segmented gloss line: 
+  ps: Part_Of_Speech # Part of speech:  
+  ft: Translated_Text # Translation: 
+entry_marker: lx # Lexicon entry marker: The field holding lexicon entry identifiers.
+lexicon_mappings:  # Mapping lexicon fields to columns: The fields listed here will be renamed accordingly.
+  lx: Headword # Headword: 
+  ps: Part_Of_Speech # Part of speech: 
+  ge: Meaning # Meaning: 
+  dt: Date # Date: 
+  a: Variants # Variants: 
+  xref: Example_IDs # Example IDs: As [suggested by Dictionaria](https://dictionaria.clld.org/submit#toolbox1).

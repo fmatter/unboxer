@@ -1,7 +1,12 @@
-aligned_fields: # Fields containing aligned text. Words will be aligned with tab stops in the output. Note that you need to use post-renaming labels.
-  - Analyzed_Word
-  - Gloss
-  - Part_Of_Speech
-slugify: true # Turn IDs (\ref) like "ConvInGarden.003" into "convingarden-003".
-fix_clitics: true # Remove spaces after proclitics and before enclitics.
-cell_separator: "; " # for allomorphs and such
+# This configuration file contains the default values for
+# variables related to interlinear text.
+aligned_fields: # Tab-aligned fields: A list of fields containing text which will be aligned when rendered in an interlinear representation.
+# Note that you need to use the field labels present **after** renaming, see [here](site:config#toolbox).
+  - Analyzed_Word # [cldf#Analyzed_Word](https://cldf.clld.org/v1.0/terms.html#analyzedWord)
+  - Gloss # [cldf#Gloss](https://cldf.clld.org/v1.0/terms.html#gloss)
+  - Part_Of_Speech # Part of speech: currently specified as a [dictionary entry property in CLDF](https://cldf.clld.org/v1.0/terms.html#partOfSpeech),
+#usable as a [foreign key in cldf-ldd](https://fl.mt/cldf-ldd/latest/foreignkeys/),
+#with a [corresponding component](https://fl.mt/cldf-ldd/latest/components/partsofspeech/).
+slugify: true # Slugification: Turn record IDs (`\ref`) into database-usable IDs, e.g. `ConvInGarden.003` into `convingarden-003`.
+fix_clitics: true # Clitic space correction: Remove spaces after proclitics and before enclitics.
+cell_separator: "; " # Cell separator: How multiple values in a cell (like [variants](#variants), or meanings) are delimited.

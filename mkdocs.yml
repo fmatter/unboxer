@@ -20,8 +20,8 @@ theme:
     # - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
-  #   - navigation.top
-  #   - navigation.tracking
+    - navigation.top
+    # - navigation.tracking
   #   - search.highlight
   #   - search.share
   #   - search.suggest
@@ -31,7 +31,7 @@ theme:
   palette:     
     # Palette toggle for light mode
     - scheme: default
-      primary: purple
+      primary: green
       accent: orange
       toggle:
         icon: material/brightness-7 
@@ -39,14 +39,34 @@ theme:
 
     # Palette toggle for dark mode
     - scheme: slate
-      primary: purple
+      primary: green
       accent: orange
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+nav:
+  - Home: index.md
+  - usage.md
+  - config.md
+  - faq.md
+  - api.md
 repo_url: https://github.com/fmatter/unboxer
 markdown_extensions:
-    - mkdocs-click
+  - mkdocs-click
+  - markdown_include.include:
+      base_path: docs
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - toc:
+      toc_depth: 3
 plugins:
   - search
-  - mkdocstrings
+  - yaml-docstrings
+  - site-urls
+watch:
+  - src
