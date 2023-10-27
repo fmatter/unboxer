@@ -592,7 +592,6 @@ def extract_corpus(
             tables["morphemes.csv"] = morphemes
             tables["parameters.csv"] = pd.concat([meanings, tables["parameters.csv"]])
             tables["parameters.csv"].drop_duplicates(subset="ID", inplace=True)
-
         create_cldf(
             tables=tables,
             conf=conf,

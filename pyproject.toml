@@ -1,29 +1,57 @@
+[tool.poetry]
+name = "unboxer"
+version = "0.0.3.dev"
+license = "Apache-2.0"
+homepage = "https://fl.mt/unboxer"
+repository = "https://github.com/fmatter/unboxer"
+readme = "README.md"
+description = "Extract shoebox and toolbox data to CSV files."
+authors = ["Florian Matter <flmt@mailbox.org>"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+
+[tool.poetry.urls]
+"Bug tracker" = "https://github.com/fmatter/unboxer/issues"
+
+
+[tool.poetry.scripts]
+unbox = 'unboxer.cli:main'
+
+[tool.poetry.dependencies]
+python = "^3.8.1"
+pytest = "^7.4.2"
+colorlog = "^6.7.0"
+humidifier = "^0.0.2"
+morphinder = "^0.0.2"
+tqdm = "^4.66.1"
+cldf-ldd = "^0.0.6"
+clldutils = "^3.20.0"
+cldfbench = "^1.14.0"
+
+[tool.poetry.group.dev.dependencies]
+keepachangelog = "^1.0.0"
+pytest = "^7.4.2"
+black = "^23.9.1"
+mkdocs = "^1.5.3"
+mkdocs-material = "^9.4.4"
+invoke = "^2.2.0"
+isort = "^5.12.0"
+prospector = "^1.10.2"
+writio = "^0.0.1"
+coverage = "^7.3.2"
+mkdocstrings = "^0.23.0"
+markdown-include = "^0.8.1"
+
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-[tool.pylint."MESSAGES.CONTROL"]
-disable=["logging-fstring-interpolation"]
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py37,py38,py39,py310,lint
-skip_missing_interpreters = true
-toxworkdir=/tmp/.unboxer_tox
-
-[testenv]
-usedevelop = True
-commands = 
-    pytest --cov
-extras = dev
-deps = pyglottolog
-
-[testenv:lint]
-commands =
-    python -m flake8
-    prospector src
-    prospector tests
-    isort --check-only src
-extras = dev
-"""

@@ -25,7 +25,7 @@ class ConvertCommand(click.Command):
             [
                 click.core.Option(
                     ("-o", "--output", "output_dir"),
-                    type=click.Path(exists=True, path_type=Path),
+                    type=click.Path(path_type=Path),
                     default=Path("."),
                     show_default=True,
                     help="Output directory",
@@ -73,6 +73,8 @@ class ConvertCommand(click.Command):
 )
 @main.command(cls=ConvertCommand)
 def wordlist(filename, data_format, config_file, cldf, output_dir, audio, languages):
+    if not output_dir.is_dir():
+        output_dir.mkdir(exist_ok=True, parents=True)
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -109,6 +111,8 @@ def wordlist(filename, data_format, config_file, cldf, output_dir, audio, langua
 def dictionary(
     filename, data_format, config_file, cldf, output_dir, audio, languages, examples
 ):
+    if not output_dir.is_dir():
+        output_dir.mkdir(exist_ok=True, parents=True)
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -152,7 +156,9 @@ def dictionary(
     help="1. A CSV table of inflection categories.\n2. A CSV table of inflection values.\n3. A .yaml file with a dict mapping morph IDs to inflectional values",
 )
 @main.command(cls=ConvertCommand)
-def corpus(filename, config_file, cldf, data_format, inflection, languages, **kwargs):
+def corpus(filename, data_format, config_file, cldf, output_dir, inflection, languages, **kwargs):
+    if not output_dir.is_dir():
+        output_dir.mkdir(exist_ok=True, parents=True)
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -170,6 +176,7 @@ def corpus(filename, config_file, cldf, data_format, inflection, languages, **kw
         filename,
         conf=conf,
         cldf=cldf,
+        output_dir=output_dir,
         inflection=infl_dict,
         languages=languages,
         **kwargs
