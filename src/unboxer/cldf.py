@@ -73,6 +73,8 @@ def create_dataset(
         for key, df in tables.items():  # examples.csv
             if key not in cldf_names:
                 continue
+            if len(df) == 0:
+                continue
             if (key, spec.module) not in [
                 ("entries.csv", "Dictionary"),
                 ("senses.csv", "Dictionary"),
