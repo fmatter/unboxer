@@ -165,7 +165,7 @@ def build_slices(
                         "Gloss": w_gloss,
                         "Description": w_gloss,
                         "Parameter_ID": [humidify(w_gloss, "meanings")],
-                        "Morpho_Segments": w_obj.split("-"),
+                        "Morpho_Segments": w_obj.strip("-").split("-"),
                     }
                 if morphinder:
                     infl_hits = {}
