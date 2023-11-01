@@ -62,7 +62,7 @@ def create_dataset(
         }
 
         for table in ldd_tables:  # morphs.csv
-            if table["url"] in tables:
+            if table["url"] in tables and len(tables[table["url"]]) > 0:
                 writer.cldf.add_component(table)  # add json metadata for MorphTable
                 for rec in tables.pop(table["url"]).to_dict(
                     "records"
@@ -72,7 +72,6 @@ def create_dataset(
         # now only native CLDF components should be left over
         for key, df in tables.items():  # examples.csv
             if key not in cldf_names:
-                print(key)
                 continue
             if (key, spec.module) not in [
                 ("entries.csv", "Dictionary"),
