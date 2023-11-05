@@ -4,19 +4,20 @@ import re
 import sys
 from itertools import combinations
 from pathlib import Path
+
 import colorlog
 import pandas as pd
-from humidifier import Humidifier
-from humidifier import get_values
-from humidifier import humidify
-from morphinder import Morphinder
-from morphinder import identify_complex_stem_position
+from humidifier import Humidifier, get_values, humidify
+from morphinder import Morphinder, identify_complex_stem_position
 from tqdm import tqdm
-from unboxer.cldf import create_cldf
-from unboxer.cldf import create_wordlist_cldf, create_dictionary_cldf
-from unboxer.cldf import get_lexical_data
-from unboxer import helpers
 
+from unboxer import helpers
+from unboxer.cldf import (
+    create_cldf,
+    create_dictionary_cldf,
+    create_wordlist_cldf,
+    get_lexical_data,
+)
 
 handler = colorlog.StreamHandler(None)
 handler.setFormatter(
@@ -599,7 +600,7 @@ def extract_corpus(
             output_dir=output_dir,
             cldf_name=cldf_name,
             languages=languages,
-            module="corpus"
+            module="corpus",
         )
     return df
 

@@ -1,22 +1,23 @@
 import logging
 import sys
 import time
+from pathlib import Path
+
 import pandas as pd
-from cldf_ldd import add_keys, add_columns
+import pybtex
+from cldf_ldd import add_columns, add_keys
 from cldf_ldd.components import tables as component_tables
-from cldfbench import CLDFSpec
 from cldf_ldd.components import tables as ldd_tables
+from cldfbench import CLDFSpec
 from cldfbench.cldf import CLDFWriter
-from pycldf.util import metadata2markdown
+from humidifier import humidify
+from pycldf.dataset import MD_SUFFIX
+from pycldf.sources import Source
+from pycldf.util import metadata2markdown, pkg_path
 from tqdm import tqdm
 from writio import load
+
 from unboxer.helpers import _slugify
-from pycldf.util import pkg_path
-from pycldf.dataset import MD_SUFFIX
-from pathlib import Path
-import pybtex
-from pycldf.sources import Source
-from humidifier import humidify
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def create_dataset(
             if (key, spec.module) not in [
                 ("entries.csv", "Dictionary"),
                 ("senses.csv", "Dictionary"),
-                ("forms.csv", "Wordlist")
+                ("forms.csv", "Wordlist"),
             ]:
                 writer.cldf.add_component(
                     cldf_names[key]
@@ -285,4 +286,4 @@ def create_wordlist_cldf(
     tables = {"parameters.csv": meanings, "forms.csv": lexicon}
     if languages:
         tables["languages.csv"] = load(languages)
-    create_cldf(tables=tables, conf=conf,module="Wordlist", output_dir=output_dir)
+    create_cldf(tables=tables, conf=conf, module="Wordlist", output_dir=output_dir)

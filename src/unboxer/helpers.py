@@ -1,8 +1,8 @@
 from pathlib import Path
+
 import yaml
 from importlib_resources import files
 from slugify import slugify
-
 
 DATA = files("unboxer") / "data"
 

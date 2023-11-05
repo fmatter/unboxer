@@ -2,13 +2,12 @@
 import logging
 import sys
 from pathlib import Path
+
 import click
 from writio import load
-from unboxer import extract_corpus
-from unboxer import extract_lexicon
-from unboxer.helpers import load_config
-from unboxer.helpers import load_default_config
 
+from unboxer import extract_corpus, extract_lexicon
+from unboxer.helpers import load_config, load_default_config
 
 log = logging.getLogger(__name__)
 
@@ -156,7 +155,16 @@ def dictionary(
     help="1. A CSV table of inflection categories.\n2. A CSV table of inflection values.\n3. A .yaml file with a dict mapping morph IDs to inflectional values",
 )
 @main.command(cls=ConvertCommand)
-def corpus(filename, data_format, config_file, cldf, output_dir, inflection, languages, **kwargs):
+def corpus(
+    filename,
+    data_format,
+    config_file,
+    cldf,
+    output_dir,
+    inflection,
+    languages,
+    **kwargs
+):
     if not output_dir.is_dir():
         output_dir.mkdir(exist_ok=True, parents=True)
     if config_file:
