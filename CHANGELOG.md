@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * no inflection **required**
 * bug with lexicon-less extraction
+* proper handling of conf dicts passed via python
+* drop empty tables
+* remove leading and trailing `-` from forms
 
 ### Added
 * `dictionary` command
@@ -17,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * audio
-* [cldf-ldd](https://pypi.org/project/cldf-ldd)
+* [cldf-ldd](https://fl.mt/cldf-ldd)
 * better feedback
 * more speed
 * adding sources
