@@ -356,6 +356,7 @@ def extract_corpus(
     """
     if not isinstance(filenames, list):
         filenames = [filenames]
+    conf = helpers.markerize(conf)
     out = []
     inflection = inflection or {}
     for filename in filenames:
@@ -401,7 +402,7 @@ def extract_corpus(
     df.fillna("", inplace=True)
     df = df[df["Primary_Text"] != ""]
     if "ID" in df:
-        if conf["slugify"]:
+        if conf.get("slugify", True):
             tqdm.pandas(desc="Creating record IDs")
             df["ID"] = df["ID"].progress_apply(
                 lambda x: humidify(x, "sentence_id", unique=True)
