@@ -50,6 +50,7 @@ writio = "^0.0.1"
 coverage = "^7.3.2"
 mkdocstrings = "^0.23.0"
 markdown-include = "^0.8.1"
+questionary = "^2.0.1"
 
 [build-system]
 requires = ["poetry-core"]
