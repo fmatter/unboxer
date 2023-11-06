@@ -51,6 +51,7 @@ coverage = "^7.3.2"
 mkdocstrings = "^0.23.0"
 markdown-include = "^0.8.1"
 questionary = "^2.0.1"
+importlib-resources = "^6.1.0"
 
 [build-system]
 requires = ["poetry-core"]
