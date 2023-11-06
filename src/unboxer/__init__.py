@@ -222,19 +222,6 @@ def build_slices(
                                     for m_id in cand:
                                         m_form, slice_id = infl_hits[m_id]
                                         for val in infl_tuples[cand]:
-                                            # print(
-                                            #     "adding value",
-                                            #     val,
-                                            #     "for morph",
-                                            #     m_id,
-                                            #     "in wordform",
-                                            #     w_id,
-                                            #     "for part",
-                                            #     slice_id,
-                                            #     "(index",
-                                            #     m_idx,
-                                            #     ")",
-                                            # )
                                             wf_inflections.append(
                                                 {
                                                     "ID": humidify(
@@ -248,6 +235,7 @@ def build_slices(
                                         del stem_glosses[stem_objs.index(m_form)]
                                         stem_objs.remove(m_form)
                                     else:
+                                        print("form not found")
                                         print(m_form)
                                         print(stem_objs)
                                         exit()
@@ -272,11 +260,6 @@ def build_slices(
                                 "Meaning": stem_gloss,
                                 "Morpho_Segments": [x.strip("-") for x in stem_objs],
                             }
-                            # exit()
-                            # print(stem_form)
-                            # print(stem_objs)
-                            # print(stem_glosses)
-                            # print(infl_hits)
                             for smid_idx, (part, partgloss) in enumerate(
                                 zip(stem_mids, stem_glosses)
                             ):
@@ -352,7 +335,9 @@ def extract_corpus(
     """
     if not isinstance(filenames, list):
         filenames = [filenames]
+    input(conf)
     conf = helpers.markerize(conf)
+    input(conf)
     out = []
     inflection = inflection or {}
     for filename in filenames:

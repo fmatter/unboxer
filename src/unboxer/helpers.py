@@ -22,6 +22,12 @@ def load_yaml(path):
 
 
 def markerize(config):
+
+    def _mark(s):
+        if "\\" not in s:
+            return "\\" + s
+        return s
+
     for mapping_str, id_field in [
         ("interlinear_mappings", "record_marker"),
         ("lexicon_mappings", "entry_marker"),
@@ -31,14 +37,10 @@ def markerize(config):
             config[mapping_str][config[id_field]] = "ID"
         if mapping_str in config:
             for marker in list(config[mapping_str].keys()):
-                if "\\" not in marker:
-                    new_marker = "\\" + marker
-                else:
-                    new_marker = marker
-                config[mapping_str][new_marker] = config[mapping_str].pop(marker)
+                config[mapping_str][_mark(marker)] = config[mapping_str].pop(marker)
     for single in ["parsing_surface", "parsing_underlying"]:
         if single in config:
-            config[single] = "\\" + config[single]
+            config[single] = _mark(config[single])
     return config
 
 
