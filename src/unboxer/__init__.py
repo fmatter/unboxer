@@ -8,8 +8,10 @@ from pathlib import Path
 import colorlog
 import pandas as pd
 from humidifier import Humidifier, get_values, humidify
+from Levenshtein import distance
 from morphinder import Morphinder, identify_complex_stem_position
 from tqdm import tqdm
+from writio import dump, load
 
 from unboxer import helpers
 from unboxer.cldf import (
@@ -309,6 +311,41 @@ def build_slices(
     )
 
 
+def guess_texts(strings, fn):
+    groups = {}
+    distances = []
+    for s in tqdm(strings, desc=f"Guessing texts for {fn.name}"):
+        d = [s]
+        for ss in strings:
+            d.append(distance(s, ss))
+        distances.append(d)
+    df = pd.DataFrame(distances)
+    df.columns = ["x"] + strings
+    df.set_index("x", inplace=True)
+    for s in strings:
+        if s not in df.columns:
+            continue
+        if df[s].mean() < 2:
+            group = list(df.index)
+        else:
+            cands = df[df[s] < df[s].mean() / 3]
+            group = list(cands.index)
+            idx = df.index.difference(cands.index)
+            df = df[idx]
+            df = df.loc[idx]
+        n = 1
+        group_id = group[0][0]
+        while all([x.startswith(group[0][0:n]) for x in group]) and len(group) > 1:
+            n += 1
+            group_id = group[0][0 : n - 1]
+        while not group_id[0].isalpha():
+            group_id = group_id[1:]
+        while not group_id[-1].isalpha():
+            group_id = group_id[0:-1]
+        groups[group_id] = group
+    return groups
+
+
 def extract_corpus(
     filenames=None,
     conf=None,
@@ -335,10 +372,7 @@ def extract_corpus(
     """
     if not isinstance(filenames, list):
         filenames = [filenames]
-    input(conf)
-    conf = helpers.markerize(conf)
-    input(conf)
-    out = []
+    file_recs = {}
     inflection = inflection or {}
     for filename in filenames:
         database_file = Path(filename)
@@ -355,18 +389,66 @@ def extract_corpus(
     You can also explicitly set the correct file encoding in your config."""
             )
             sys.exit()
+        file_recs[filename] = []
         records = content.split(record_marker + " ")
         for record in records[1::]:
             res = _get_fields(
                 record_marker + " " + record, record_marker, multiple=[], sep=sep
             )
             if res:
-                out.append(res)
+                file_recs[filename].append(res)
             else:
                 pass
                 # log.warning("Empty record:")
                 # log.warning(record)
-    df = pd.DataFrame.from_dict(out)
+    dfs = {x: pd.DataFrame.from_dict(y) for x, y in file_recs.items()}
+    all_texts = []
+    for fn, df in dfs.items():
+        if conf["text_mode"] != "none":
+            text_path = Path(".") / f"{fn.stem}_texts.csv"
+            if text_path.is_file():
+                texts = load(text_path)
+            else:
+                texts = []
+        if record_marker in df and conf.get("slugify", True):
+            if conf["interlinear_mappings"].get(record_marker, "") == "ID":
+                conf["interlinear_mappings"].pop(record_marker)
+            tqdm.pandas(desc="Creating record IDs")
+            df["ID"] = df[record_marker].progress_apply(
+                lambda x: humidify(x, "sentence_id", unique=True)
+            )
+        else:
+            df["ID"] = df.index
+        df["filename"] = fn.name
+
+        if conf["text_mode"] == "record_marker":
+            tmap_file = Path(".") / f"{fn.stem}_textmap.yaml"
+            if tmap_file.is_file():
+                text_map = load(tmap_file)
+            elif "ID" in df.columns:
+                text_map = guess_texts(list(df["ID"]), fn)
+                dump(text_map, tmap_file)
+                log.info(
+                    f"Created tentative record-text mapping in {tmap_file.resolve()}"
+                )
+            else:
+                text_map = {}
+            if isinstance(texts, list):
+                texts.extend(text_map.keys())
+                texts = pd.DataFrame(texts)
+                texts.columns = ["ID"]
+                for addcol in ["Name", "Description", "Comment", "Source", "Type"]:
+                    texts[addcol] = ""
+                dump(texts, text_path)
+            all_texts.append(texts)
+            texts = pd.concat(all_texts)
+            reverse_map = {}
+            for text_id, recs in text_map.items():
+                for rec in recs:
+                    reverse_map[rec] = text_id
+    df = pd.concat(dfs.values())
+    if conf["text_mode"] != "none":
+        df["Text_ID"] = df["ID"].map(reverse_map).fillna("")
     if not df[record_marker].is_unique:
         if complain:
             log.warning("Found duplicate IDs, will only keep first of each:")
@@ -382,14 +464,6 @@ def extract_corpus(
         log.info(f"Dropped {old-len(df)} unparsed records.")
     df.fillna("", inplace=True)
     df = df[df["Primary_Text"] != ""]
-    if "ID" in df:
-        if conf.get("slugify", True):
-            tqdm.pandas(desc="Creating record IDs")
-            df["ID"] = df["ID"].progress_apply(
-                lambda x: humidify(x, "sentence_id", unique=True)
-            )
-    else:
-        df["ID"] = df.index
 
     if lexicon:
         lex_df = extract_lexicon(
@@ -455,7 +529,6 @@ def extract_corpus(
     for col in tqdm(df.columns, desc="Columns"):
         if col in conf["aligned_fields"]:
             df[col] = df[col].apply(_remove_spaces)
-    df = df[df["ID"].isin(rec_list)]
     df = df.apply(helpers.fix_glosses, axis=1)
     sentence_slices = sentence_slices[sentence_slices["Example_ID"].isin(rec_list)]
     if conf["fix_clitics"]:
@@ -513,16 +586,18 @@ def extract_corpus(
         morphs["Name"] = morphs["Form"]
         if tokenize:
             log.info("Tokenizing...")
-            for df in [wordforms, morphs]:
-                if len(df) > 0:
+            for m_df in [wordforms, morphs]:
+                if len(m_df) > 0:
                     for orig, repl in conf.get("replace", {}).items():
-                        df["Form"] = df["Form"].replace(orig, repl, regex=True)
-                    df["Segments"] = df["Form"].apply(lambda x: tokenize(x).split(" "))
-                    bad = df[df["Segments"].apply(lambda x: "�" in x)]
+                        m_df["Form"] = m_df["Form"].replace(orig, repl, regex=True)
+                    m_df["Segments"] = m_df["Form"].apply(
+                        lambda x: tokenize(x).split(" ")
+                    )
+                    bad = m_df[m_df["Segments"].apply(lambda x: "�" in x)]
                     if len(bad) > 1:
                         log.warning("Unsegmentable")
                         print(bad)
-                        df["Segments"] = df["Segments"].apply(
+                        m_df["Segments"] = m_df["Segments"].apply(
                             lambda x: "" if "�" in x else x
                         )
         if len(morph_slices) > 0:
@@ -569,6 +644,8 @@ def extract_corpus(
             tables["inflections.csv"] = inflections
             tables["inflectionalcategories.csv"] = inflection["infl_cats"]
             tables["inflectionalvalues.csv"] = inflection["infl_vals"]
+        if conf["text_mode"] != "none" and len(texts) > 0 and len(df) > 0:
+            tables["texts.csv"] = texts
         if lexicon:
             lexicon, meanings = get_lexical_data(lex_df)
             tables["morphemes.csv"] = morphemes

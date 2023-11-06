@@ -17,3 +17,4 @@ lexicon_mappings:  # Mapping lexicon fields to columns: The fields listed here w
   ps: Part_Of_Speech # Part of speech: 
   ge: Meaning # Meaning: 
   xref: Example_IDs # Example IDs: As [suggested by Dictionaria](https://dictionaria.clld.org/submit#toolbox1).
+text_mode: none # Text information: Stored in `record_marker`, as a `separate` entry, or `none`?

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+* optionally extract text info from record marker
+
 ### Fixed
 * bug with `\\` markers
 

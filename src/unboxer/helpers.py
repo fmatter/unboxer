@@ -22,7 +22,6 @@ def load_yaml(path):
 
 
 def markerize(config):
-
     def _mark(s):
         if "\\" not in s:
             return "\\" + s

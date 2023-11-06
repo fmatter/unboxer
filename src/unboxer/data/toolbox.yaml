@@ -16,3 +16,4 @@ lexicon_mappings:  # Mapping lexicon fields to columns: The fields listed here w
   dt: Date # Date: 
   a: Variants # Variants: 
   xref: Example_IDs # Example IDs: As [suggested by Dictionaria](https://dictionaria.clld.org/submit#toolbox1).
+text_mode: none # Text information: Stored in `record_marker`, as a `separate` entry, or `none`?

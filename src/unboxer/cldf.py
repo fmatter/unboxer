@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 import pybtex
 from cldf_ldd import add_columns, add_keys
-from cldf_ldd.components import tables as component_tables
 from cldf_ldd.components import tables as ldd_tables
 from cldfbench import CLDFSpec
 from cldfbench.cldf import CLDFWriter
@@ -14,7 +13,6 @@ from humidifier import humidify
 from pycldf.dataset import MD_SUFFIX
 from pycldf.sources import Source
 from pycldf.util import metadata2markdown, pkg_path
-from tqdm import tqdm
 from writio import load
 
 from unboxer.helpers import _slugify
@@ -62,6 +60,7 @@ def create_dataset(
             },
         }
 
+        texts = False
         for table in ldd_tables:  # morphs.csv
             if table["url"] in tables and len(tables[table["url"]]) > 0:
                 writer.cldf.add_component(table)  # add json metadata for MorphTable
@@ -69,6 +68,8 @@ def create_dataset(
                     "records"
                 ):  # remove processed cldf-ldd files, iterate rows
                     writer.objects[table["url"]].append(rec)  # write row to CLDF
+            if table["url"] == "texts.csv":
+                texts = True
 
         # now only native CLDF components should be left over
         for key, df in tables.items():  # examples.csv
@@ -102,21 +103,10 @@ def create_dataset(
             for col in df.columns:  # apply mapped methods to dataframe
                 if col in table_actions:  # Gloss
                     table_actions[col](df)  # splitcol(df, "Gloss", sep=" ")
-            if key == "examples.csv":
-                writer.cldf.add_columns(
-                    "ExampleTable",
-                    {
-                        "name": "Source",
-                        "required": False,
-                        "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#source",
-                        "datatype": {"base": "string"},
-                        "separator": ";",
-                    },
-                )
             for rec in df.to_dict("records"):
                 writer.objects[key].append(rec)
 
-        # add_columns(writer.cldf)  # add cldf-ldd columns to native tables
+        add_columns(writer.cldf)  # add cldf-ldd columns to native tables
         add_keys(writer.cldf)  # write cldf-ldd specific keys
 
         if Path("sources.bib").is_file():  # add sources
