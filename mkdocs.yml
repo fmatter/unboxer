@@ -68,5 +68,7 @@ plugins:
   - search
   - yaml-docstrings
   - site-urls
+  - mkdocstrings:
+      default_handler: python
 watch:
   - src
