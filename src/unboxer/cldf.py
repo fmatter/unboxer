@@ -40,6 +40,10 @@ def create_dataset(
                 MD_SUFFIX, ""
             )  # "examples.csv": Example
 
+        tables["languages.csv"] = pd.DataFrame.from_dict(
+            [get_lg(conf["lang_id"], languages)]
+        )
+
         # mapping columns to required table transformation workflows
         table_actions = {
             "Source": lambda x: _splitcol(x, "Source"),
@@ -108,7 +112,6 @@ def create_dataset(
 
         add_columns(writer.cldf)  # add cldf-ldd columns to native tables
         add_keys(writer.cldf)  # write cldf-ldd specific keys
-
         if Path("sources.bib").is_file():  # add sources
             bib = pybtex.database.parse_file(
                 "sources.bib",
@@ -178,25 +181,24 @@ def _replace_meanings(label, meaning_dict):
 
 
 def get_lg(lg_id, languages=None):
+    if languages is not None:
+        lgs = load(languages, mode="csv2dict")
+        if lg_id not in lgs:
+            log.error(
+                f"The specified language ID [{lg_id}] was not found in the file {languages}"
+            )
+            sys.exit()
+        return lgs[lg_id]
     try:
         import pyglottolog  # pylint: disable=import-outside-toplevel
         from cldfbench.catalogs import (
             Glottolog,
         )  # pylint: disable=import-outside-toplevel
     except ImportError:
-        if languages is not None:
-            lgs = load(languages, mode="csv2dict")
-            if lg_id not in lgs:
-                log.error(
-                    f"The specified language ID [{lg_id}] was not found in the file {languages}"
-                )
-                sys.exit()
-            return lgs[lg_id]
-        else:
-            log.error(
-                "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can specify a languages.csv file."
-            )
-            sys.exit()
+        log.error(
+            "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can specify a languages.csv file."
+        )
+        sys.exit()
     glottolog = pyglottolog.Glottolog(Glottolog.from_config().repo.working_dir)
     languoid = glottolog.languoid(lg_id)
     return {

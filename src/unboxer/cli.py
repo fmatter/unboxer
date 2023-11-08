@@ -75,7 +75,7 @@ class ConvertCommand(click.Command):
                     default=None,
                     show_default=True,
                     help="A yaml file with a list of allowed entries.",
-                )
+                ),
             ]
         )
 
@@ -85,7 +85,9 @@ class ConvertCommand(click.Command):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def wordlist(filename, data_format, config_file, cldf, output_dir, audio, languages, segments):
+def wordlist(
+    filename, data_format, config_file, cldf, output_dir, audio, languages, segments
+):
     if not output_dir.is_dir():
         output_dir.mkdir(exist_ok=True, parents=True)
     if config_file:
@@ -148,7 +150,8 @@ def dictionary(
 
 @click.argument(
     "filenames",
-    type=click.Path(exists=True, path_type=Path), nargs=-1,
+    type=click.Path(exists=True, path_type=Path),
+    nargs=-1,
 )
 @click.option(
     "-l",
@@ -178,14 +181,7 @@ def dictionary(
     help="1. A CSV table of inflection categories.\n2. A CSV table of inflection values.\n3. A .yaml file with a dict mapping morph IDs to inflectional values",
 )
 @main.command(cls=ConvertCommand)
-def corpus(
-    filenames,
-    data_format,
-    config_file,
-    cldf,
-    inflection,
-    **kwargs
-):
+def corpus(filenames, data_format, config_file, cldf, inflection, **kwargs):
     if config_file:
         conf = load_config(config_file, data_format)
     else:
@@ -199,13 +195,7 @@ def corpus(
     if inflection:
         for k, x in zip(["infl_cats", "infl_vals", "infl_morphemes"], inflection):
             infl_dict[k] = load(x, index_col="ID")
-    extract_corpus(
-        filenames,
-        conf=conf,
-        cldf=cldf,
-        inflection=infl_dict,
-        **kwargs
-    )
+    extract_corpus(filenames, conf=conf, cldf=cldf, inflection=infl_dict, **kwargs)
 
 
 if __name__ == "__main__":

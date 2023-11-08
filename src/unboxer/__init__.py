@@ -10,9 +10,9 @@ import pandas as pd
 from humidifier import Humidifier, get_values, humidify
 from Levenshtein import distance
 from morphinder import Morphinder, identify_complex_stem_position
+from segments import Profile, Tokenizer
 from tqdm import tqdm
 from writio import dump, load
-from segments import Profile, Tokenizer
 
 from unboxer import helpers
 from unboxer.cldf import (
@@ -340,7 +340,7 @@ def guess_texts(strings, fn):
         while all([x.startswith(group[0][0:n]) for x in group]) and len(group) > 1:
             n += 1
             group_id = group[0][0 : n - 1]
-        while len(group_id) > 0 and  not group_id[0].isalpha():
+        while len(group_id) > 0 and not group_id[0].isalpha():
             group_id = group_id[1:]
         while len(group_id) > 0 and not group_id[-1].isalpha():
             group_id = group_id[0:-1]
@@ -405,7 +405,7 @@ def extract_corpus(
     for fn, df in dfs.items():
         log.info(f"Processing {fn}")
         if conf["text_mode"] != "none":
-            text_path = Path(".") / f"{fn.stem}_texts.csv"
+            text_path = output_dir / f"{fn.stem}_texts.csv"
             if text_path.is_file():
                 texts = load(text_path)
             else:
@@ -519,7 +519,7 @@ def extract_corpus(
                     "Name": stem_gloss,
                 },
             )
-    if include :
+    if include:
         include = load(include)
         input(include)
         rec_list = include
@@ -589,12 +589,15 @@ def extract_corpus(
             extra = ["+", "-", "(", ")", "/", "∅", "0", "?", ",", "=", ";"]
             pdf = load(segments)
             tokenizer = Tokenizer(
-                    Profile(*(pdf.to_dict("records") + [{"Grapheme": x, "IPA": x} for x in extra]))
+                Profile(
+                    *(
+                        pdf.to_dict("records")
+                        + [{"Grapheme": x, "IPA": x} for x in extra]
+                    )
                 )
-            log.info("Tokenizing...")
-            tokenize = lambda x: tokenizer(
-                x.lower().replace("-", ""), column="IPA"
             )
+            log.info("Tokenizing...")
+            tokenize = lambda x: tokenizer(x.lower().replace("-", ""), column="IPA")
             for m_df in [wordforms, morphs]:
                 if len(m_df) > 0:
                     for orig, repl in conf.get("replace", {}).items():
