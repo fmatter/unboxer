@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * limit text guessing by size
+* `errors.log` in output directory
 
 ### Fixed
 * bug with text guessing

@@ -374,6 +374,13 @@ def extract_corpus(
         conf (dict): Configuration (see) todo: insert link
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
+    # Logging
+    log_filepath = output_dir / "errors.log"
+    hdlr = logging.FileHandler(log_filepath, mode="w")
+    formatter = logging.Formatter("%(levelname)s: %(message)s")
+    hdlr.setFormatter(formatter)
+    hdlr.setLevel(logging.WARNING)
+    log.addHandler(hdlr)
     file_recs = {}
     inflection = inflection or {}
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -530,7 +537,7 @@ def extract_corpus(
         rec_list = list(df["ID"])
     df = df[df["ID"].isin(rec_list)]
 
-    if conf["text_mode"] != "none":
+    if conf["text_mode"] != "none" and all_texts:
         texts = pd.concat(all_texts)
         texts = texts[texts["ID"].isin(list(df["Text_ID"]))]
 
@@ -605,7 +612,7 @@ def extract_corpus(
             )
             log.info("Tokenizing...")
             tokenize = lambda x: tokenizer(x.lower().replace("-", ""), column="IPA")
-            for m_df in [wordforms, morphs]:
+            for label, m_df in {"wordforms": wordforms, "morphs": morphs}.items():
                 if len(m_df) > 0:
                     for orig, repl in conf.get("replace", {}).items():
                         m_df["Form"] = m_df["Form"].replace(orig, repl, regex=True)
@@ -614,7 +621,7 @@ def extract_corpus(
                     )
                     bad = m_df[m_df["Segments"].apply(lambda x: "�" in x)]
                     if len(bad) > 1:
-                        log.warning(f"Unsegmentable: <{bad}>")
+                        log.warning(f"Unsegmentable {label}:\n{bad}\n")
                         m_df["Segments"] = m_df["Segments"].apply(
                             lambda x: "" if "�" in x else x
                         )
