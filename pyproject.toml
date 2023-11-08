@@ -35,9 +35,9 @@ morphinder = "^0.0.2"
 tqdm = "^4.66.1"
 cldf-ldd = "^0.0.6"
 clldutils = "^3.20.0"
-cldfbench = "^1.14.0"
 python-levenshtein = "^0.23.0"
 segments = "^2.2.1"
+cldfbench = "^1.14.0"
 
 [tool.poetry.group.dev.dependencies]
 keepachangelog = "^1.0.0"
@@ -57,7 +57,6 @@ importlib-resources = "^6.1.0"
 mkdocs-click = "^0.8.1"
 mkdocs-site-urls = "^0.2.0"
 mkdocs-terminal = "4.2.0"
-cldfbench = {extras = ["glottolog"], version = "^1.14.0"}
 
 [build-system]
 requires = ["poetry-core"]
