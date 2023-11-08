@@ -345,10 +345,8 @@ def guess_texts(strings, fn):
             n += 1
             group_id = group[0][0 : n - 1]
         while len(group_id) > 0 and not group_id[0].isalpha():
-            print("ripping from end")
             group_id = group_id[1:]
         while len(group_id) > 0 and not group_id[-1].isalpha():
-            print("ripping from start")
             group_id = group_id[0:-1]
         groups[group_id] = group
     return groups
