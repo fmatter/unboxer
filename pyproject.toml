@@ -57,6 +57,7 @@ importlib-resources = "^6.1.0"
 mkdocs-click = "^0.8.1"
 mkdocs-site-urls = "^0.2.0"
 mkdocs-terminal = "4.2.0"
+cldfbench = {extras = ["glottolog"], version = "^1.14.0"}
 
 [build-system]
 requires = ["poetry-core"]
