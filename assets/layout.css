@@ -1,0 +1,7 @@
+:root { 
+    --page-width: 80em;
+}
+
+#terminal-mkdocs-side-panel{
+    width: 60%;
+}
