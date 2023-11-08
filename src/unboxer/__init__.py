@@ -441,15 +441,13 @@ def extract_corpus(
                 for addcol in ["Name", "Description", "Comment", "Source", "Type"]:
                     texts[addcol] = ""
                 dump(texts, text_path)
-            all_texts.append(texts)
-            texts = pd.concat(all_texts)
             reverse_map = {}
             for text_id, recs in text_map.items():
                 for rec in recs:
                     reverse_map[rec] = text_id
+            df["Text_ID"] = df["ID"].map(reverse_map).fillna("")
+            all_texts.append(texts)
     df = pd.concat(dfs.values())
-    if conf["text_mode"] != "none":
-        df["Text_ID"] = df["ID"].map(reverse_map).fillna("")
     if not df[record_marker].is_unique:
         if complain:
             log.warning("Found duplicate IDs, will only keep first of each:")
@@ -521,11 +519,15 @@ def extract_corpus(
             )
     if include:
         include = load(include)
-        input(include)
         rec_list = include
     else:
         rec_list = list(df["ID"])
     df = df[df["ID"].isin(rec_list)]
+
+    if conf["text_mode"] != "none":
+        texts = pd.concat(all_texts)
+        texts = texts[texts["ID"].isin(list(df["Text_ID"]))]
+
     sentence_slices = sentence_slices[sentence_slices["Example_ID"].isin(rec_list)]
     for col in tqdm(df.columns, desc="Columns"):
         if col in conf["aligned_fields"]:

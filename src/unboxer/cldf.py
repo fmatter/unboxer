@@ -196,7 +196,7 @@ def get_lg(lg_id, languages=None):
         )  # pylint: disable=import-outside-toplevel
     except ImportError:
         log.error(
-            "Install cldfbench and pyglottolog and run cldfbench catconfig to download the glottolog catalog. Alternatively, you can specify a languages.csv file."
+            "Use pip to install cldfbench[glottolog]. Alternatively, you can specify a languages.csv file."
         )
         sys.exit()
     glottolog = pyglottolog.Glottolog(Glottolog.from_config().repo.working_dir)
