@@ -122,7 +122,7 @@ def create_dataset(
 
 
 def create_cldf(tables, conf, module, output_dir, cldf_name="cldf", **kwargs):
-    if "Language_ID" not in conf:
+    if "lang_id" not in conf:
         raise TypeError("Please specify a Language_ID in your configuration")
 
     spec = CLDFSpec(

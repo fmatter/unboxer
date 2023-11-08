@@ -10,3 +10,4 @@ aligned_fields: # Tab-aligned fields: A list of fields containing text which wil
 slugify: true # Slugification: Turn record IDs (`\ref`) into database-usable IDs, e.g. `ConvInGarden.003` into `convingarden-003`.
 fix_clitics: true # Clitic space correction: Remove spaces after proclitics and before enclitics.
 cell_separator: "; " # Cell separator: How multiple values in a cell (like [variants](#variants), or meanings) are delimited.
+skip_empty_obj: True # Skip empty records: 

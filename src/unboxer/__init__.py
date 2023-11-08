@@ -12,6 +12,7 @@ from Levenshtein import distance
 from morphinder import Morphinder, identify_complex_stem_position
 from tqdm import tqdm
 from writio import dump, load
+from segments import Profile, Tokenizer
 
 from unboxer import helpers
 from unboxer.cldf import (
@@ -314,15 +315,16 @@ def build_slices(
 def guess_texts(strings, fn):
     groups = {}
     distances = []
-    for s in tqdm(strings, desc=f"Guessing texts for {fn.name}"):
+    for s in tqdm(strings, desc=f"Measuring title distances for {fn.name}"):
         d = [s]
         for ss in strings:
             d.append(distance(s, ss))
         distances.append(d)
+    log.info("Building matrix...")
     df = pd.DataFrame(distances)
     df.columns = ["x"] + strings
     df.set_index("x", inplace=True)
-    for s in strings:
+    for s in tqdm(strings, desc=f"Guessing texts"):
         if s not in df.columns:
             continue
         if df[s].mean() < 2:
@@ -338,9 +340,9 @@ def guess_texts(strings, fn):
         while all([x.startswith(group[0][0:n]) for x in group]) and len(group) > 1:
             n += 1
             group_id = group[0][0 : n - 1]
-        while not group_id[0].isalpha():
+        while len(group_id) > 0 and  not group_id[0].isalpha():
             group_id = group_id[1:]
-        while not group_id[-1].isalpha():
+        while len(group_id) > 0 and not group_id[-1].isalpha():
             group_id = group_id[0:-1]
         groups[group_id] = group
     return groups
@@ -355,12 +357,10 @@ def extract_corpus(
     audio=None,
     skip_empty_obj=False,
     complain=False,
-    tokenize=None,
-    exclude=None,
+    segments=None,
     inflection=None,
-    include="all",
-    cldf_name="cldf",
-    parsing_db=None,
+    include=None,
+    parsing=None,
     languages=None,
 ):
     """Extract text records from a corpus.
@@ -370,10 +370,9 @@ def extract_corpus(
         conf (dict): Configuration (see) todo: insert link
         cldf (bool, optional): Should a CLDF dataset be created? Defaults to `False`.
     """
-    if not isinstance(filenames, list):
-        filenames = [filenames]
     file_recs = {}
     inflection = inflection or {}
+    output_dir.mkdir(exist_ok=True, parents=True)
     for filename in filenames:
         database_file = Path(filename)
         record_marker = "\\" + conf["record_marker"]
@@ -404,12 +403,14 @@ def extract_corpus(
     dfs = {x: pd.DataFrame.from_dict(y) for x, y in file_recs.items()}
     all_texts = []
     for fn, df in dfs.items():
+        log.info(f"Processing {fn}")
         if conf["text_mode"] != "none":
             text_path = Path(".") / f"{fn.stem}_texts.csv"
             if text_path.is_file():
                 texts = load(text_path)
             else:
                 texts = []
+
         if record_marker in df and conf.get("slugify", True):
             if conf["interlinear_mappings"].get(record_marker, "") == "ID":
                 conf["interlinear_mappings"].pop(record_marker)
@@ -422,7 +423,7 @@ def extract_corpus(
         df["filename"] = fn.name
 
         if conf["text_mode"] == "record_marker":
-            tmap_file = Path(".") / f"{fn.stem}_textmap.yaml"
+            tmap_file = output_dir / f"{fn.stem}_textmap.yaml"
             if tmap_file.is_file():
                 text_map = load(tmap_file)
             elif "ID" in df.columns:
@@ -458,7 +459,7 @@ def extract_corpus(
     df.rename(columns=conf["interlinear_mappings"], inplace=True)
     if "Analyzed_Word" not in df.columns:
         raise ValueError("Did not find Analyzed_Word:", conf["interlinear_mappings"])
-    if skip_empty_obj:
+    if conf["skip_empty_obj"]:
         old = len(df)
         df = df[df["Gloss"] != ""]
         log.info(f"Dropped {old-len(df)} unparsed records.")
@@ -467,7 +468,7 @@ def extract_corpus(
 
     if lexicon:
         lex_df = extract_lexicon(
-            lexicon, parsing_db=parsing_db, conf=conf, output_dir=output_dir
+            lexicon, parsing=parsing, conf=conf, output_dir=output_dir
         )
         morphemes, morphs = extract_morphs(lex_df, sep)
         morphinder = Morphinder(morphs, complain=complain)
@@ -518,10 +519,10 @@ def extract_corpus(
                     "Name": stem_gloss,
                 },
             )
-    if include != "all":
+    if include :
+        include = load(include)
+        input(include)
         rec_list = include
-    elif exclude:
-        rec_list = list(df["ID"]) - exclude
     else:
         rec_list = list(df["ID"])
     df = df[df["ID"].isin(rec_list)]
@@ -539,13 +540,13 @@ def extract_corpus(
         df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))
 
     if len(wordforms) > 0:
-        wordforms["Language_ID"] = conf.get("Language_ID", "undefined")
+        wordforms["Language_ID"] = conf.get("lang_id", "undefined")
         wordforms = wordforms[wordforms["Form"] != ""]
-    df["Language_ID"] = conf.get("Language_ID", "undefined")
+    df["Language_ID"] = conf.get("lang_id", "undefined")
 
     if lexicon:
-        morphemes["Language_ID"] = conf.get("Language_ID", "undefined")
-    morphs["Language_ID"] = conf.get("Language_ID", "undefined")
+        morphemes["Language_ID"] = conf.get("lang_id", "undefined")
+    morphs["Language_ID"] = conf.get("lang_id", "undefined")
     if not morphs["ID"].is_unique:
         log.warning("Duplicate IDs in morph table, only keeping first instances:")
         log.warning(morphs[morphs.duplicated(subset="ID", keep=False)])
@@ -584,8 +585,16 @@ def extract_corpus(
             )
 
         morphs["Name"] = morphs["Form"]
-        if tokenize:
+        if segments:
+            extra = ["+", "-", "(", ")", "/", "∅", "0", "?", ",", "=", ";"]
+            pdf = load(segments)
+            tokenizer = Tokenizer(
+                    Profile(*(pdf.to_dict("records") + [{"Grapheme": x, "IPA": x} for x in extra]))
+                )
             log.info("Tokenizing...")
+            tokenize = lambda x: tokenizer(
+                x.lower().replace("-", ""), column="IPA"
+            )
             for m_df in [wordforms, morphs]:
                 if len(m_df) > 0:
                     for orig, repl in conf.get("replace", {}).items():
@@ -595,8 +604,7 @@ def extract_corpus(
                     )
                     bad = m_df[m_df["Segments"].apply(lambda x: "�" in x)]
                     if len(bad) > 1:
-                        log.warning("Unsegmentable")
-                        print(bad)
+                        log.warning(f"Unsegmentable: <{bad}>")
                         m_df["Segments"] = m_df["Segments"].apply(
                             lambda x: "" if "�" in x else x
                         )
@@ -635,7 +643,7 @@ def extract_corpus(
         tables["morphs.csv"] = morphs
         tables["wordformparts.csv"] = morph_slices
         if len(stems) > 0:
-            stems["Language_ID"] = conf.get("Language_ID", "undefined")
+            stems["Language_ID"] = conf.get("lang_id", "undefined")
             stems["Lexeme_ID"] = stems["ID"]
             tables["stems.csv"] = stems
             tables["lexemes.csv"] = stems
@@ -655,7 +663,7 @@ def extract_corpus(
             tables=tables,
             conf=conf,
             output_dir=output_dir,
-            cldf_name=cldf_name,
+            cldf_name=conf.get("cldf_name", "cldf"),
             languages=languages,
             module="corpus",
         )
@@ -665,7 +673,7 @@ def extract_corpus(
 def extract_lexicon(
     database_file,
     conf,
-    parsing_db=None,
+    parsing=None,
     output_dir=None,
     cldf=None,
     audio=None,
@@ -684,8 +692,8 @@ def extract_lexicon(
         content = f.read()
     sep = conf["cell_separator"]
     lookup_dict = {}
-    if parsing_db:
-        with open(parsing_db, "r", encoding=conf["encoding"]) as f:
+    if parsing:
+        with open(parsing, "r", encoding=conf["encoding"]) as f:
             parsing = f.read()
         parses = parsing.split("\n\n")
         for parse in parses[1::]:
@@ -739,7 +747,7 @@ def extract_lexicon(
         sys.exit()
 
     if conf["Language_ID"]:
-        df["Language_ID"] = conf["Language_ID"]
+        df["Language_ID"] = conf["lang_id"]
 
     if examples:
         example_df = extract_corpus(examples, conf=conf)

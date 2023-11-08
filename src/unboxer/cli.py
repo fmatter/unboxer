@@ -62,6 +62,20 @@ class ConvertCommand(click.Command):
                     show_default=True,
                     help="A CSV file containing language data.",
                 ),
+                click.core.Option(
+                    ("-s", "--segments", "segments"),
+                    type=click.Path(exists=True, path_type=Path),
+                    default=None,
+                    show_default=True,
+                    help="A CSV file mapping IPA to Graphemes.",
+                ),
+                click.core.Option(
+                    ("-I", "--include", "include"),
+                    type=click.Path(exists=True, path_type=Path),
+                    default=None,
+                    show_default=True,
+                    help="A yaml file with a list of allowed entries.",
+                )
             ]
         )
 
@@ -71,7 +85,7 @@ class ConvertCommand(click.Command):
     type=click.Path(exists=True, path_type=Path),
 )
 @main.command(cls=ConvertCommand)
-def wordlist(filename, data_format, config_file, cldf, output_dir, audio, languages):
+def wordlist(filename, data_format, config_file, cldf, output_dir, audio, languages, segments):
     if not output_dir.is_dir():
         output_dir.mkdir(exist_ok=True, parents=True)
     if config_file:
@@ -133,8 +147,8 @@ def dictionary(
 
 
 @click.argument(
-    "filename",
-    type=click.Path(exists=True, path_type=Path),
+    "filenames",
+    type=click.Path(exists=True, path_type=Path), nargs=-1,
 )
 @click.option(
     "-l",
@@ -143,6 +157,15 @@ def dictionary(
     default=None,
     help="Connect corpus to a lexicon",
     type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "-p",
+    "--parsing",
+    "parsing",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    show_default=True,
+    help="A parsing database.",
 )
 @click.option(
     "-i",
@@ -156,23 +179,19 @@ def dictionary(
 )
 @main.command(cls=ConvertCommand)
 def corpus(
-    filename,
+    filenames,
     data_format,
     config_file,
     cldf,
-    output_dir,
     inflection,
-    languages,
     **kwargs
 ):
-    if not output_dir.is_dir():
-        output_dir.mkdir(exist_ok=True, parents=True)
     if config_file:
         conf = load_config(config_file, data_format)
     else:
         conf = load_default_config(data_format)
-    if cldf and "Language_ID" not in conf:
-        conf["Language_ID"] = click.prompt(
+    if cldf and "lang_id" not in conf:
+        conf["lang_id"] = click.prompt(
             "There is no Language_ID specified in the configuration, please enter manually",
             type=str,
         )
@@ -181,12 +200,10 @@ def corpus(
         for k, x in zip(["infl_cats", "infl_vals", "infl_morphemes"], inflection):
             infl_dict[k] = load(x, index_col="ID")
     extract_corpus(
-        filename,
+        filenames,
         conf=conf,
         cldf=cldf,
-        output_dir=output_dir,
         inflection=infl_dict,
-        languages=languages,
         **kwargs
     )
 
