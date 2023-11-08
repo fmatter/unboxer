@@ -27,7 +27,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade poetry
           poetry install --with dev
-          poetry install cldfbench[glottolog]
+          pip install cldfbench[glottolog]
       - name: Setup pandoc
         uses: nikeee/setup-pandoc@v1
       - name: Test with pytest
