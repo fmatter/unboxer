@@ -25,8 +25,8 @@ jobs:
           python-version: '3.10' 
       - name: Upgrade pip and install dependencies
         run: |
-          python3 -m pip install --upgrade poetry
           python3 -m pip install cldfbench[glottolog]
+          python3 -m pip install --upgrade poetry
           poetry install --with dev
       - name: Setup pandoc
         uses: nikeee/setup-pandoc@v1
