@@ -542,13 +542,12 @@ def extract_corpus(
         df["Primary_Text"] = df["Primary_Text"].apply(lambda x: re.sub(r"\s+", " ", x))
 
     if len(wordforms) > 0:
-        wordforms["Language_ID"] = conf.get("lang_id", "undefined")
         wordforms = wordforms[wordforms["Form"] != ""]
-    df["Language_ID"] = conf.get("lang_id", "undefined")
 
+    for x in [df, wordforms, morphs]:
+        x["Language_ID"] = conf.get("lang_id", "undefined")
     if lexicon:
         morphemes["Language_ID"] = conf.get("lang_id", "undefined")
-    morphs["Language_ID"] = conf.get("lang_id", "undefined")
     if not morphs["ID"].is_unique:
         log.warning("Duplicate IDs in morph table, only keeping first instances:")
         log.warning(morphs[morphs.duplicated(subset="ID", keep=False)])
@@ -751,8 +750,6 @@ def extract_lexicon(
         print(df)
         sys.exit()
 
-    if conf["Language_ID"]:
-        df["Language_ID"] = conf["lang_id"]
 
     if examples:
         example_df = extract_corpus(examples, conf=conf)
