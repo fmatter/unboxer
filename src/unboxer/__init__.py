@@ -324,7 +324,7 @@ def guess_texts(strings, fn):
     df = pd.DataFrame(distances)
     df.columns = ["x"] + strings
     df.set_index("x", inplace=True)
-    for s in tqdm(strings, desc=f"Guessing texts"):
+    for s in strings:
         if s not in df.columns:
             continue
         if df[s].mean() < 2:
@@ -337,12 +337,18 @@ def guess_texts(strings, fn):
             df = df.loc[idx]
         n = 1
         group_id = group[0][0]
-        while all([x.startswith(group[0][0:n]) for x in group]) and len(group) > 1:
+        while (
+            all([x.startswith(group[0][0:n]) for x in group])
+            and len(group) > 1
+            and n < len(group[0])
+        ):
             n += 1
             group_id = group[0][0 : n - 1]
         while len(group_id) > 0 and not group_id[0].isalpha():
+            print("ripping from end")
             group_id = group_id[1:]
         while len(group_id) > 0 and not group_id[-1].isalpha():
+            print("ripping from start")
             group_id = group_id[0:-1]
         groups[group_id] = group
     return groups
@@ -426,7 +432,7 @@ def extract_corpus(
             tmap_file = output_dir / f"{fn.stem}_textmap.yaml"
             if tmap_file.is_file():
                 text_map = load(tmap_file)
-            elif "ID" in df.columns:
+            elif "ID" in df.columns and len(df) < 7000:
                 text_map = guess_texts(list(df["ID"]), fn)
                 dump(text_map, tmap_file)
                 log.info(
@@ -437,16 +443,18 @@ def extract_corpus(
             if isinstance(texts, list):
                 texts.extend(text_map.keys())
                 texts = pd.DataFrame(texts)
-                texts.columns = ["ID"]
-                for addcol in ["Name", "Description", "Comment", "Source", "Type"]:
-                    texts[addcol] = ""
-                dump(texts, text_path)
-            reverse_map = {}
-            for text_id, recs in text_map.items():
-                for rec in recs:
-                    reverse_map[rec] = text_id
-            df["Text_ID"] = df["ID"].map(reverse_map).fillna("")
-            all_texts.append(texts)
+                if len(texts) > 0:
+                    texts.columns = ["ID"]
+                    for addcol in ["Name", "Description", "Comment", "Source", "Type"]:
+                        texts[addcol] = ""
+                    dump(texts, text_path)
+            if text_map:
+                reverse_map = {}
+                for text_id, recs in text_map.items():
+                    for rec in recs:
+                        reverse_map[rec] = text_id
+                df["Text_ID"] = df["ID"].map(reverse_map).fillna("")
+                all_texts.append(texts)
     df = pd.concat(dfs.values())
     if not df[record_marker].is_unique:
         if complain:
