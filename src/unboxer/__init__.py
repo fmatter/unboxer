@@ -750,7 +750,6 @@ def extract_lexicon(
         print(df)
         sys.exit()
 
-
     if examples:
         example_df = extract_corpus(examples, conf=conf)
     else:
